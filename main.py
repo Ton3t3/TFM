@@ -1,8 +1,18 @@
 # CODE BY EMILIO ANTONIO ZUBIZARRETA PELAYO
 import numpy as np
+import pysd
 
-def delay(input, delay_time, initial_value):
-    # Placeholder for delay function implementation
+def delay(d_input, delay_time, initial_value):
+    # pysd.py_backend.statefuls.DelayFixed(d_input, delay_time, initial_value)
+    pass 
+
+def graph(input, points_array):
+    # Placeholder for graph function implementation
+    "IMPORTANT!! NEEDS TO RETURN SOMENTHING, USED IN OTHER FUNCTIONS"
+    pass
+
+def smth1(input, timeframe):
+    # Placeholder for smth1 function implementation
     pass
 
 class Model:
@@ -18,17 +28,27 @@ class Model:
         self.investment_on_stations = investment_on_charging_stations_sector(self)
 
     def advance(self):
+        #Emission sector
+        self.emission.update_stocks
+        #Charging station cost and profitability sector
+        self.charg_cost_and_profitability.update_stocks
+        #Investment on charging stations sector
+        self.investment_on_stations.update_stocks
+        #Charging station availability sector
+        self.charg_availability.update_stocks
+        #Vehicle cost sector
+        self.vehicle_cost.update_stocks
+        #Utility function sector
+        self.utility_function.update_stocks
+        #Vehicle fleet sector
+        self.vehicle_fleet.update_stocks
+
+        #UPDATE TIME
         self.t += self.dt
 
 
 class emission_sector:
-    # miscellaneous variables
-    time_for_carbon_cost = _ #! Var not assigned
-    time_for_emission_reduction = _ #! Var not assigned
-
     #emission sector static variables
-    CARBON_SOCIETY_COST = 0.0336*time_for_carbon_cost-60.7712
-    """[SEK/kgCO2eq]"""
     SWICH_FOR_NEW_REGULATION_EFFECT = 1
     """[Dmnl]"""
     Carbon_intensity_of_biofuel = 361/1000
@@ -44,7 +64,18 @@ class emission_sector:
 
     def __init__(self, model):
         self.model = model
+        #Stocks initial values
+        self.cache_government_Fund_Balance_by_Five_Levers = 0
+        self.cache_cumulative_Emission_without_any_etrucks = 10^-9
+        self.cache_cumulative_Emission_with_having_etrucks = 10^-9
+        self.cache_total_Gov_Funds = 10^-9
 
+    def time_for_carbon_cost(self):
+        return self.model.t
+    
+    def time_for_emission_reduction(self):
+        return self.model.t
+        
     def emission_reduction_based_on_new_regulation_func(self, time_for_emission_reduction):
         if (time_for_emission_reduction >= 2024): 
             return 0.06 
@@ -52,6 +83,10 @@ class emission_sector:
             return 0.305 
         else: 
             return (1.7606*time_for_emission_reduction-3534.5)/100
+
+    def CARBON_SOCIETY_COST(self):
+        """[SEK/kgCO2eq]"""
+        return 0.0336*self.time_for_carbon_cost-60.7712
 
     def annual_fuel_consumption__kWh__per_diesel_truck(self):
         """[kWh/(Vehicle*Year)]"""
@@ -75,11 +110,6 @@ class emission_sector:
     
     ##
     @property
-    def Annual_Emission__without_any_etrucks(self): #
-        """[kgCO2eq/Year]"""
-        return self.total_annual_amount_of_energy*self.Carbon_intensity_of_diesel_fuel_by_considering_biofuel
-
-    @property
     def annual_fuel_consumption__kWh__for_diesel_fleet(self): #
         """[kWh/Year]"""
         return self.annual_fuel_consumption__kWh__per_diesel_truck*self.model.vehicle_cost.Diesel_Truck_Fleet_Size
@@ -90,25 +120,10 @@ class emission_sector:
         return self.annual_fuel_consumption__kWh__for_diesel_fleet*self.Carbon_intensity_of_diesel_fuel_by_considering_biofuel*self.factor_for_correction_emission
                 
     @property
-    def Annual_Gov_Funding_by_Five_Levers(self): #
-        """[SEK/Year]"""
-        return -(self.model.investment_on_stations.Annual_gov_subsidy_on_charging+self.model.vehicle_cost.Annual_gov_subsidy_on_vehicle_purchase_cost+self.model.utility_function.annual_gov_funding_for_improving_etruck_technology+self.model.charg_cost_and_profitability.annual_gov_fund_on_EL_price+self.model.vehicle_cost.Annual_Gov_Fund_on_Diesel_Price)
-
-    @property
-    def Annual_Total_Gov_Funds(self): #
-        """[SEK/Year]"""
-        return self.model.investment_on_stations.Annual_gov_subsidy_on_charging+self.model.vehicle_cost.Annual_gov_subsidy_on_vehicle_purchase_cost+self.model.utility_function.annual_gov_funding_for_improving_etruck_technology
-
-    @property
     def Total_annual_emission_from_trucks__tank_to_wheel(self): #
         """[kgCO2eq/Year]"""
         return (self.Annual_operational_emission_from_etrucks+self.Annual_operational_emission_from_diesel_trucks)
-
-    @property
-    def Annual_Emission__with_having_etrucks(self): #
-        """[kgCO2eq/Year]"""
-        return self.Total_annual_emission_from_trucks__tank_to_wheel
-               
+          
     @property
     def Annual_carbon_cost(self): #
         """[SEK/Year]"""
@@ -128,76 +143,90 @@ class emission_sector:
     @property
     def Saving_emission_by_transit_to_electrification(self): #
         """[kgCO2eq]"""
-        return self.cumulative_Emission_without_any_etrucks(self.model.t)-self.cumulative_Emission_with_having_etrucks(self.model.t)
+        return self.cumulative_Emission_without_any_etrucks -self.cumulative_Emission_with_having_etrucks 
                 
     @property
     def Annual_operational_emission_from_etrucks(self): #
         """[kgCO2eq/Year]"""
-        return self.model.charg_cost_and_profitability.charging_consumption_per_etruck_per_year*self.model.vehicle_fleet.etruck_Fleet_Size(self.model.t)*self.Carbon_intensity_of_electricity__fuel         
+        return self.model.charg_cost_and_profitability.charging_consumption_per_etruck_per_year*self.model.vehicle_fleet.etruck_Fleet_Size *self.Carbon_intensity_of_electricity__fuel         
 
     @property
     def Gov_total_fund_per_vehicle(self): #
         """[SEK/Vehicle]"""
-        return self.total_Gov_Funds(self.model.t)/self.model.vehicle_fleet.etruck_Fleet_Size(self.model.t)
+        return self.total_Gov_Funds /self.model.vehicle_fleet.etruck_Fleet_Size 
                 
     @property
     def total_annual_amount_of_energy(self): #
         """[kWh/Year]"""
-        return self.model.vehicle_cost.Diesel_Truck_Fleet_Size*self.annual_fuel_consumption__kWh__per_diesel_truck+self.model.vehicle_fleet.etruck_Fleet_Size(self.model.t)*self.model.charg_cost_and_profitability.charging_consumption_per_etruck_per_year 
+        return self.model.vehicle_cost.Diesel_Truck_Fleet_Size*self.annual_fuel_consumption__kWh__per_diesel_truck+self.model.vehicle_fleet.etruck_Fleet_Size *self.model.charg_cost_and_profitability.charging_consumption_per_etruck_per_year 
 
     @property
     def Share_of_diesel_truck_in_total_fleet_size(self): #
         """[Dmnl]"""
-        return self.model.vehicle_cost.Diesel_Truck_Fleet_Size/self.model.vehicle_fleet.total_Truck_Fleet_Size(self.model.t)
+        return self.model.vehicle_cost.Diesel_Truck_Fleet_Size/self.model.vehicle_fleet.total_Truck_Fleet_Size 
 
     @property
     def Monetarized_saving_emissions_per_investment_unit_in_electrification(self): #
         """[Dmnl]"""
-        return self.Saving_emission_converted_to_money_due_to_electrification/self.total_Gov_Funds(self.model.t)
+        return self.Saving_emission_converted_to_money_due_to_electrification/self.total_Gov_Funds 
+
+    ## FLOWS
+    # Inflows
+    @property
+    def Annual_Gov_Funding_by_Five_Levers(self): #
+        """[SEK/Year]"""
+        return -(self.model.investment_on_stations.Annual_gov_subsidy_on_charging+self.model.vehicle_cost.Annual_gov_subsidy_on_vehicle_purchase_cost+self.model.utility_function.annual_gov_funding_for_improving_etruck_technology+self.model.charg_cost_and_profitability.annual_gov_fund_on_EL_price+self.model.vehicle_cost.Annual_Gov_Fund_on_Diesel_Price)
+
+    @property
+    def Annual_Emission__without_any_etrucks(self): #
+        """[kgCO2eq/Year]"""
+        return self.total_annual_amount_of_energy*self.Carbon_intensity_of_diesel_fuel_by_considering_biofuel
+
+    @property
+    def Annual_Emission__with_having_etrucks(self): #
+        """[kgCO2eq/Year]"""
+        return self.Total_annual_emission_from_trucks__tank_to_wheel
+            
+    @property
+    def Annual_Total_Gov_Funds(self): #
+        """[SEK/Year]"""
+        return self.model.investment_on_stations.Annual_gov_subsidy_on_charging+self.model.vehicle_cost.Annual_gov_subsidy_on_vehicle_purchase_cost+self.model.utility_function.annual_gov_funding_for_improving_etruck_technology
                         
-    # Time functions
+    ## STOCKS
     @property
-    def government_Fund_Balance_by_Five_Levers(self, t): #
+    def government_Fund_Balance_by_Five_Levers(self): #
         """[SEK]"""
-        if t <= 0:
-            res = (self.Annual_Gov_Funding_by_Five_Levers) * self.model.dt
-        else:
-            res = self.government_Fund_Balance_by_Five_Levers(t - self.model.dt) + (self.Annual_Gov_Funding_by_Five_Levers) * self.model.dt
-        return res
+        return self.cache_government_Fund_Balance_by_Five_Levers + (self.Annual_Gov_Funding_by_Five_Levers) * self.model.dt
 
     @property
-    def cumulative_Emission_without_any_etrucks(self, t): #
+    def cumulative_Emission_without_any_etrucks(self): #
         """small initial value near to zero [kgCO2eq]"""
-        if t <= 0:
-            res = 10^-9 + (self.Annual_Emission__without_any_etrucks) * self.model.dt
-        else:
-            res = self.cumulative_Emission_without_any_etrucks(t - self.model.dt) + (self.Annual_Emission__without_any_etrucks) * self.model.dt
-        return res
+        return self.cache_cumulative_Emission_without_any_etrucks + (self.Annual_Emission__without_any_etrucks) * self.model.dt
 
     @property
-    def cumulative_Emission_with_having_etrucks(self, t): #
+    def cumulative_Emission_with_having_etrucks(self): #
         """small initial value near to zero [kgCO2eq]"""
-        if t <= 0:
-            res = 10^-9 + (self.Annual_Emission__with_having_etrucks) * self.model.dt
-        else:
-            res = self.cumulative_Emission_with_having_etrucks(t - self.model.dt) + (self.Annual_Emission__with_having_etrucks) * self.model.dt
-        return res
+        return self.cache_cumulative_Emission_with_having_etrucks + (self.Annual_Emission__with_having_etrucks) * self.model.dt
 
     @property
-    def total_Gov_Funds(self, t): #
+    def total_Gov_Funds(self): #
         """small initial value near to zero [SEK]"""
-        if t <= 0:
-            res = 10^-9 + (self.Annual_Total_Gov_Funds) * self.model.dt
-        else: 
-            res = self.total_Gov_Funds(t - self.model.dt) + (self.Annual_Total_Gov_Funds) * self.model.dt
-        return res
+        return self.cache_total_Gov_Funds + (self.Annual_Total_Gov_Funds) * self.model.dt
+
+    @property
+    def update_stocks(self):
+        """**[NEW]** Updates the cache values from previous stocks, avoiding big loops when dealing with high *t*"""
+        d_balance = self.government_Fund_Balance_by_Five_Levers
+        d_without = self.cumulative_Emission_without_any_etrucks
+        d_with = self.cumulative_Emission_with_having_etrucks
+        d_total = self.total_Gov_Funds
+        self.cache_government_Fund_Balance_by_Five_Levers += d_balance
+        self.cache_cumulative_Emission_without_any_etrucks += d_without
+        self.cache_cumulative_Emission_with_having_etrucks += d_with
+        self.cache_total_Gov_Funds += d_total
 
 
 class charging_station_cost_and_profitability_sector:
-    # miscellaneous variables
-    time_for_price_of_electricity = _ #! Var not assigned
-    OPERATIONAL_AND_MAINTENANCE_COST = _ #! Var not assigned
-
     # charging_station_cost_and_profitability sector static variables
     time_unit = 1
     """Formulation of the unit for IRR is complicated. Thus we used this vriable to fix unit left and hand right problem. It doesn't change the model [Year]"""
@@ -221,9 +250,18 @@ class charging_station_cost_and_profitability_sector:
     """[Dmnl]"""
     MAX_NOMINAL_CAPACITY_OF_A_STATION_PER_YEAR = 350*8760
     """Charger Power (kw/station)* 8760 hour/year [kWh/(Year*Charging stations)]"""
+    ## From "Average Power of Charging Station" stock
+
     
     def __init__(self, model):
         self.model = model
+        #Stocks initial values
+        self.cache_income_of_electricity_stock = 0
+        self.cache_gov_fund_on_EL_price_stock = 0
+        self.cache_gov_Charging_subsidy_stock_2 = 0
+
+    def time_for_price_of_electricity(self):
+        return self.model.t
 
     def PRICE_OF_ELECTRICITY(self):
         """[SEK/kWh]"""
@@ -285,12 +323,7 @@ class charging_station_cost_and_profitability_sector:
     def charging_station_profitability__Profitability_index_after_gov_subsidy(self): #
         """[Dmnl]"""
         return ((self.revenue_per_station_per_year-self.operation_cost_per_station_per_year)*self.discount_factor_for_stations)/self.construction_cost_per_station_paid_by_infra_providers
-                       
-    @property
-    def annual_gov_subsidy_on_charging_2(self): #
-        """[SEK/Year]"""
-        return self.model.charg_availability.Building_Charging_Station*self.CONSTRUCTION_COST_PER_STATION*self.GOV_SUBSIDY_PERCENTAGE_ON_CONSTRUCTION_COST_OF_CHARGING_STATIONS      
-        
+                           
     @property
     def utilization_in_total(self): #
         """[Dmnl]"""
@@ -319,7 +352,7 @@ class charging_station_cost_and_profitability_sector:
     @property
     def operation_cost_per_station_per_year(self): #
         """[SEK/(Charging stations*Year)]"""
-        return (self.cost_of_electricity_per_station_per_year+self.OPERATIONAL_AND_MAINTENANCE_COST)
+        return (self.cost_of_electricity_per_station_per_year+self.operational_AND_maintenance_cost_of_a_station__based_on_percentage_of_capex)
 
     @property
     def total_operational_cost_per_station__accumulated_over_lifetime_years(self): #
@@ -334,91 +367,95 @@ class charging_station_cost_and_profitability_sector:
     @property
     def max_possible_utilization_rate_of_a_station__lookup_number_of_etrucks(self): #
         """"min of 0.1; max of 0.7 Based on interviews and Anders Grauers course Grauers, A. (2023). Electromobility: a system perspective [Course]. Swedish Electromobility Centre, Chalmers University of Technology. [Dmnl]"""
-        return GRAPH(self.model.vehicle_fleet.share_of_electric_truck_in_total_fleet_size) Points: (0.000, 0.1000), (1.000, 0.7000) #! QUESTION: HOW TO REPRESENT THIS?
+        # GRAPH(self.model.vehicle_fleet.share_of_electric_truck_in_total_fleet_size) Points: (0.000, 0.1000), (1.000, 0.7000)
+        graph(self.model.vehicle_fleet.share_of_electric_truck_in_total_fleet_size, [(0.000, 0.1000), (1.000, 0.7000)])
 
     @property
     def Charging_station_Capacity_to_demand_ratio_percentage(self): #
         """[Dmnl]"""
         return self.model.charg_availability.charging_station_capacity_to_demand_ratio*100
                 
-    # Time dependent variables - DIRECT
-    @property
-    def annual_gov_fund_on_EL_price(self): #
-        """Positive amounts show that governments pay subsidies on EL; Negative amounts show that governments receive taxes on EL [SEK/Year]"""
-        return (0.0415*self.time_for_price_of_electricity-83.286)*self.charging_consumption_per_etruck_per_year*self.model.vehicle_fleet.etruck_Fleet_Size(self.model.t)*(1-self.sensitivity_coefficient_for_EL) 
-            
-    @property
-    def Annual_income_of_electricity__inflow(self): #
-        """[SEK/Year]"""
-        return self.charging_consumption_per_etruck_per_year*self.model.vehicle_fleet.etruck_Fleet_Size(self.model.t)*self.PRICE_OF_ELECTRICITY  
-
+    # Time dependent variables - DIRECT        
     @property
     def Average_energy_demand_from_each_station_per_year(self): #
         """to avoid being zero in the denominator [kWh/(Charging stations*Year)]"""
-        return self.charging_consumption_per_etruck_per_year*self.model.vehicle_fleet.etruck_Fleet_Size(self.model.t)/max(10^-9, self.model.charg_availability.installed_Charging_Stations(self.model.t))   
+        return self.charging_consumption_per_etruck_per_year*self.model.vehicle_fleet.etruck_Fleet_Size/max(10^-9, self.model.charg_availability.installed_Charging_Stations )   
 
     @property
     def Power_supply_per_etruck_per_year(self): #
         """[kWh/(Year*Vehicle)]"""
-        return self.Total_power_supply_by_all_charging_station_per_year/self.model.vehicle_fleet.etruck_Fleet_Size(self.model.t)
+        return self.Total_power_supply_by_all_charging_station_per_year/self.model.vehicle_fleet.etruck_Fleet_Size
                 
     @property
     def total_consumption_of_electric_fleet(self): #
         """[kWh/Year]"""
-        return self.charging_consumption_per_etruck_per_year*self.model.vehicle_fleet.etruck_Fleet_Size(self.model.t)
+        return self.charging_consumption_per_etruck_per_year*self.model.vehicle_fleet.etruck_Fleet_Size
                 
     @property
     def Total_power_supply_by_all_charging_station_per_year(self): #
         """[kWh/Year]"""
-        return self.utilized_capacity_of_a_station_per_year*self.model.charg_availability.installed_Charging_Stations(self.model.t)
+        return self.utilized_capacity_of_a_station_per_year*self.model.charg_availability.installed_Charging_Stations 
         
     @property
     def total_capacity_of_all_installed_station(self): #
         """[kWh/Year]"""
-        return self.maximum_available_capacity_of_a_station_per_year*self.model.charg_availability.installed_Charging_Stations(self.model.t)
+        return self.maximum_available_capacity_of_a_station_per_year*self.model.charg_availability.installed_Charging_Stations 
+
+    ## FLOWS
+    # Inflows
+    @property
+    def Annual_income_of_electricity__inflow(self): #
+        """[SEK/Year]"""
+        return self.charging_consumption_per_etruck_per_year*self.model.vehicle_fleet.etruck_Fleet_Size *self.PRICE_OF_ELECTRICITY  
+
+    @property
+    def annual_gov_fund_on_EL_price(self): #
+        """Positive amounts show that governments pay subsidies on EL; Negative amounts show that governments receive taxes on EL [SEK/Year]"""
+        return (0.0415*self.time_for_price_of_electricity-83.286)*self.charging_consumption_per_etruck_per_year*self.model.vehicle_fleet.etruck_Fleet_Size *(1-self.sensitivity_coefficient_for_EL) 
+
+    @property
+    def annual_gov_subsidy_on_charging_2(self): #
+        """[SEK/Year]"""
+        return self.model.charg_availability.Building_Charging_Station*self.CONSTRUCTION_COST_PER_STATION*self.GOV_SUBSIDY_PERCENTAGE_ON_CONSTRUCTION_COST_OF_CHARGING_STATIONS      
     
-
-    # Time functions
+    def increase_in_Average_Power_of_Charging_Station(self):
+        """[kw/Charging stations/Year]"""
+        return (self.TEHNOLOGY_MATURITY_OF_POWER_OF_CHARGING_STATION*self.average_power_of_charging_station_gap) / self.ADJ_TIME_OF_POWER_OF_CHARGING_STATION
+    ## STOCKS
     @property
-    def income_of_electricity_stock(self, t): #
+    def income_of_electricity_stock(self): #
         """[SEK]"""
-        if t <= 0:
-            res = (self.Annual_income_of_electricity__inflow) * self.model.dt
-        else:
-            res = self.income_of_electricity_stock(t - self.model.dt) + (self.Annual_income_of_electricity__inflow) * self.model.dt
-        return res
+        return self.cache_income_of_electricity_stock + (self.Annual_income_of_electricity__inflow) * self.model.dt
 
     @property
-    def gov_fund_on_EL_price_stock(self, t): #
+    def gov_fund_on_EL_price_stock(self): #
         """[SEK]"""
-        if t <= 0:
-            res = (self.annual_gov_fund_on_EL_price) * self.model.dt
-        else:
-            res = self.gov_fund_on_EL_price_stock(t - self.model.dt) + (self.annual_gov_fund_on_EL_price) * self.model.dt
-        return res
+        return self.cache_gov_fund_on_EL_price_stock + (self.annual_gov_fund_on_EL_price) * self.model.dt
 
     @property
-    def gov_Charging_subsidy_stock_2(self, t): #
+    def gov_Charging_subsidy_stock_2(self): #
         """[SEK]"""
-        if t <= 0:
-            res = ("annual_gov._subsidy_on_charging_2") * self.model.dt
-        else:
-            res = self.gov_Charging_subsidy_stock_2(t - self.model.dt) + ("annual_gov._subsidy_on_charging_2") * self.model.dt
-        return res
+        return self.cache_gov_Charging_subsidy_stock_2 + (self.annual_gov_subsidy_on_charging_2) * self.model.dt
 
+    #! MISSING STOCK: AVERAGE POWER OF CHARGING STATION
+
+    @property
+    def update_stocks(self):
+        """**[NEW]** Updates the cache values from previous stocks, avoiding big loops when dealing with high *t*"""
+        d_income = self.income_of_electricity_stock
+        d_gov_fund = self.gov_fund_on_EL_price_stock
+        d_gov_subsidy = self.gov_Charging_subsidy_stock_2
+        self.cache_income_of_electricity_stock += d_income
+        self.cache_gov_fund_on_EL_price_stock += d_gov_fund
+        self.cache_gov_Charging_subsidy_stock_2 += d_gov_subsidy
 
 class investment_on_charging_stations_sector:
-    # miscellaneous variables 
-    TIME = _ #! Var not assigned
-    timeframe_of_average = _ #! Var not assigned (MAYBE IS THE SAME AS "TIMEFRAME_OF_AVERAGE" CONSTANT VARIABLE)
-    planning_horizon_in_year = _ #! Var not assigned
-    look_up_profitability_index_to_private_investment = _ #! Var not assigned
-    Deciding_not_to_invest__reluctance_to_invest = _ #! Var not assigned
-
     # investment_on_charging_stations sector static variables
-    INITIAL_POTENTIAL_PUBLIC_FUNDS = 1,65E+06
+    RELUCTANCE_TO_INVEST_RATE = 0
+    """Percentage of investors that decide not to invest in the charging infrastructure even after all assessments. They are between 0 to 5 percent random number RANDOM NORMAL(0, 0.05 , 0 , 1 , 0 ) [1/Year]"""
+    INITIAL_POTENTIAL_PUBLIC_FUNDS = 1.65E+06
     """according to the klimatklivet data: 1,648,000 kr [SEK]"""
-    INITIAL_POTENTIAL_PRIVATE_FUNDS = 1,00E+06
+    INITIAL_POTENTIAL_PRIVATE_FUNDS = 1.00E+06
     """[SEK]"""
     TIME_TO_INVESTMENT_FOR_PRIVATE_SECTOR = 1
     """Based on expert opinion [Year]"""
@@ -445,6 +482,10 @@ class investment_on_charging_stations_sector:
     
     def __init__(self, model):
         self.model = model
+        #Stocks initial values
+        self.cache_potential_Private_Investment_in_Charging_Stations = self.INITIAL_POTENTIAL_PRIVATE_FUNDS
+        self.cache_potential_Government_Investment_in_Charging_Stations = self.INITIAL_POTENTIAL_PUBLIC_FUNDS
+        self.cache_gov_Charging_subsidy_stock = 0
 
     def Goal_of_charging_stations_for_full_adoption_of_electric_trucks(self):
         """[Charging stations]"""
@@ -467,8 +508,9 @@ class investment_on_charging_stations_sector:
     @property
     def Sensitivity_of_private_investors_to_profitability_index(self): #
         """"Based on interviews. The sensitivity of private investors to the profitability index/how important a high profitability index is for investment decisions. PI > 1: The project is profitable. PI = 1: The project breaks even. PI < 1: The project is not profitable, as the costs exceed the returns. In the base scenario, investor sensitivity is moderate. When the profitability index reaches 4, investors are likely to invest at maximum level. [Dmnl]"""
-        return GRAPH(self.model.charg_cost_and_profitability.charging_station_profitability__Profitability_index_after_gov_subsidy) Points: (0.00, 0.000), (1.00, 0.000), (5.00, 1.000), (10.00, 1.000) #! QUESTION: HOW TO REPRESENT THIS?
-        
+        # GRAPH(self.model.charg_cost_and_profitability.charging_station_profitability__Profitability_index_after_gov_subsidy) Points: (0.00, 0.000), (1.00, 0.000), (5.00, 1.000), (10.00, 1.000)
+        graph(self.model.charg_cost_and_profitability.charging_station_profitability__Profitability_index_after_gov_subsidy, [(0.00, 0.000), (1.00, 0.000), (5.00, 1.000), (10.00, 1.000)])
+
     @property
     def gov_portion_of_investment_per_station(self): #
         """[SEK/Charging stations]"""
@@ -483,87 +525,93 @@ class investment_on_charging_stations_sector:
     def ratio_of_gov_to_private_investment(self): #
         """[Dmnl]"""
         return self.gov_portion_of_investment_per_station/self.private_portion_of_investment_per_station
-                
-    @property
-    def Addition_of_Private_Investment_in_Charging_Stations(self): #
-        """[SEK/Year]"""
-        return (self.market_gap_for_charging_stations*self.private_portion_of_investment_per_station*self.look_up_profitability_index_to_private_investment)/self.TIME_TO_CLOSE_GAP_FOR_PRIVATE_SECTOR
-                
-    @property
-    def Annual_gov_subsidy_on_charging(self): #
-        """[SEK/year]"""
-        return self.Actual_Government_Investment_in_Charging_Stations
-                
+                                          
     @property
     def future_demand_of_charging_station(self): #
         """We used "e-truck sales" because we wanted to add future growth of demand to current demand, so we calculated how many new trucks will need charging stations. [Charging stations]"""
-        return (SMTH1(self.model.vehicle_fleet.Etruck_Sales, self.timeframe_of_average)*self.model.charg_cost_and_profitability.charging_consumption_per_etruck_per_year*self.planning_horizon_in_year)/self.model.charg_cost_and_profitability.maximum_available_capacity_of_a_station_per_year #! QUESTION: Usage of SMTH1 function
+        return (smth1(self.model.vehicle_fleet.Etruck_Sales, self.TIMEFRAME_OF_AVERAGE)*self.model.charg_cost_and_profitability.charging_consumption_per_etruck_per_year*self.PLANNING_HORIZON)/self.model.charg_cost_and_profitability.maximum_available_capacity_of_a_station_per_year
                 
 
-    #Time dependent variables - DIRECT  
-    @property
-    def Actual_Government_Investment_in_Charging_Stations(self): #
-        """if stock>0, public investment, otherwise 0 [SEK/year]"""
-        return self.Actual_Private_Investment_in_Charging_Stations*self.ratio_of_gov_to_private_investment if (self.potential_Government_Investment_in_Charging_Stations(self.model.t) > 0) else 0
-
-    @property
-    def Addition_of_Government_Investment_in_Charging_Stations(self): #
-        """[SEK/Year]"""
-        if ((self.TIME <= 2030) & (self.model.emission.Total_annual_emission_from_trucks__tank_to_wheel <= self.goal_of_emission_level_in_2030)):
-            return 0
-        elif ((self.TIME <= 2045) & (self.model.emission.Total_annual_emission_from_trucks__tank_to_wheel <= self.goal_of_emission_level_in_2045)):
-            return 0
-        else: 
-            return ((self.gap_of_number_of_charging_stations_based_on_regulation*self.gov_portion_of_investment_per_station)-self.potential_Government_Investment_in_Charging_Stations(self.model.t))/self.TIME_TO_CLOSE_GAP_FOR_GOV       
-
-    @property        
-    def Actual_Private_Investment_in_Charging_Stations(self): #
-        """[SEK/year]"""
-        return (self.potential_Private_Investment_in_Charging_Stations(self.model.t)/self.TIME_TO_INVESTMENT_FOR_PRIVATE_SECTOR)
-                
+    #Time dependent variables - DIRECT                 
     @property
     def gap_of_number_of_charging_stations_based_on_regulation(self): #
         """[Charging stations]"""
-        return self.Goal_of_charging_stations_for_full_adoption_of_electric_trucks-self.model.charg_availability.installed_Charging_Stations(self.model.t)
+        return self.Goal_of_charging_stations_for_full_adoption_of_electric_trucks-self.model.charg_availability.installed_Charging_Stations 
                 
     @property
     def demand_of_charging_station(self): #
         """[Charging stations]"""
-        return (self.model.vehicle_fleet.etruck_Fleet_Size(self.model.t)*self.model.charg_cost_and_profitability.charging_consumption_per_etruck_per_year)/self.model.charg_cost_and_profitability.maximum_available_capacity_of_a_station_per_year
+        return (self.model.vehicle_fleet.etruck_Fleet_Size*self.model.charg_cost_and_profitability.charging_consumption_per_etruck_per_year)/self.model.charg_cost_and_profitability.maximum_available_capacity_of_a_station_per_year
 
     @property
     def market_gap_for_charging_stations(self): #
         """[Charging stations]"""
-        return max(0, self.demand_of_charging_station+(self.future_demand_of_charging_station*self.ON_OFF_SWITCH_for_considering_future_charging_demand)-self.model.charg_availability.installed_Charging_Stations(self.model.t))
-                
-    # Time functions
+        return max(0, self.demand_of_charging_station+(self.future_demand_of_charging_station*self.ON_OFF_SWITCH_for_considering_future_charging_demand)-self.model.charg_availability.installed_Charging_Stations )
+
+    ## FLOWS
+    # Inflows
     @property
-    def potential_Private_Investment_in_Charging_Stations(self, t): #
-        """[SEK]"""
-        if t <= 0:
-            res = self.INITIAL_POTENTIAL_PRIVATE_FUNDS + (self.Addition_of_Private_Investment_in_Charging_Stations - self.Deciding_not_to_invest__reluctance_to_invest - self.Actual_Private_Investment_in_Charging_Stations) * self.model.dt
-        else:
-            res = self.potential_Private_Investment_in_Charging_Stations(t - self.model.dt) + (self.Addition_of_Private_Investment_in_Charging_Stations - self.Deciding_not_to_invest__reluctance_to_invest - self.Actual_Private_Investment_in_Charging_Stations) * self.model.dt
-        return res
+    def Addition_of_Private_Investment_in_Charging_Stations(self): #
+        """[SEK/Year]"""
+        # return (self.market_gap_for_charging_stations*self.private_portion_of_investment_per_station*self.look_up_profitability_index_to_private_investment)/self.TIME_TO_CLOSE_GAP_FOR_PRIVATE_SECTOR
+        return (self.market_gap_for_charging_stations*self.private_portion_of_investment_per_station*self.Sensitivity_of_private_investors_to_profitability_index)/self.TIME_TO_CLOSE_GAP_FOR_PRIVATE_SECTOR
+        
+    @property
+    def Addition_of_Government_Investment_in_Charging_Stations(self): #
+        """[SEK/Year]"""
+        if ((self.model.t <= 2030) & (self.model.emission.Total_annual_emission_from_trucks__tank_to_wheel <= self.goal_of_emission_level_in_2030)):
+            return 0
+        elif ((self.model.t <= 2045) & (self.model.emission.Total_annual_emission_from_trucks__tank_to_wheel <= self.goal_of_emission_level_in_2045)):
+            return 0
+        else: 
+            return ((self.gap_of_number_of_charging_stations_based_on_regulation*self.gov_portion_of_investment_per_station)-self.potential_Government_Investment_in_Charging_Stations )/self.TIME_TO_CLOSE_GAP_FOR_GOV       
 
     @property
-    def potential_Government_Investment_in_Charging_Stations(self, t): #
+    def Annual_gov_subsidy_on_charging(self): #
+        """[SEK/year]"""
+        return self.Actual_Government_Investment_in_Charging_Stations
+ 
+    # Outflows
+    @property        
+    def Actual_Private_Investment_in_Charging_Stations(self): #
+        """[SEK/year]"""
+        return (self.potential_Private_Investment_in_Charging_Stations /self.TIME_TO_INVESTMENT_FOR_PRIVATE_SECTOR)
+
+    @property
+    def Deciding_not_to_invest__reluctance_to_invest(self):
+        """This could be reluctance in investing in electric charging station and we can go for other refueling option instead (like hydogen, biofuel), based on the comment by Astrid in SD transport SIG [SEK/Year]"""
+        return self.potential_Private_Investment_in_Charging_Stations*self.RELUCTANCE_TO_INVEST_RATE
+
+    @property
+    def Actual_Government_Investment_in_Charging_Stations(self): #
+        """if stock>0, public investment, otherwise 0 [SEK/year]"""
+        return self.Actual_Private_Investment_in_Charging_Stations*self.ratio_of_gov_to_private_investment if (self.potential_Government_Investment_in_Charging_Stations  > 0) else 0
+     
+    ## STOCKS
+    @property
+    def potential_Private_Investment_in_Charging_Stations(self): #
         """[SEK]"""
-        if t <= 0:
-            res = self.INITIAL_POTENTIAL_PUBLIC_FUNDS + (self.Addition_of_Government_Investment_in_Charging_Stations - self.Actual_Government_Investment_in_Charging_Stations) * self.model.dt
-        else:
-            res = self.potential_Government_Investment_in_Charging_Stations(t - self.model.dt) + (self.Addition_of_Government_Investment_in_Charging_Stations - self.Actual_Government_Investment_in_Charging_Stations) * self.model.dt
-        return res
+        return self.cache_potential_Private_Investment_in_Charging_Stations + (self.Addition_of_Private_Investment_in_Charging_Stations - self.Deciding_not_to_invest__reluctance_to_invest - self.Actual_Private_Investment_in_Charging_Stations) * self.model.dt
+
+    @property
+    def potential_Government_Investment_in_Charging_Stations(self): #
+        """[SEK]"""
+        return self.cache_potential_Government_Investment_in_Charging_Stations + (self.Addition_of_Government_Investment_in_Charging_Stations - self.Actual_Government_Investment_in_Charging_Stations) * self.model.dt
     
     @property
-    def gov_Charging_subsidy_stock(self, t): #
+    def gov_Charging_subsidy_stock(self): #
         """[SEK]"""
-        if t <= 0:
-            res = (self.Annual_gov_subsidy_on_charging) * self.model.dt
-        else:
-            res = self.gov_Charging_subsidy_stock(t - self.model.dt) + (self.Annual_gov_subsidy_on_charging) * self.model.dt
-        return res
+        return self.cache_gov_Charging_subsidy_stock + (self.Annual_gov_subsidy_on_charging) * self.model.dt
 
+    @property
+    def update_stocks(self):
+        """**[NEW]** Updates the cache values from previous stocks, avoiding big loops when dealing with high *t*"""
+        d_private = self.potential_Private_Investment_in_Charging_Stations
+        d_government = self.potential_Government_Investment_in_Charging_Stations
+        d_subsidy = self.gov_Charging_subsidy_stock
+        self.cache_potential_Private_Investment_in_Charging_Stations += d_private
+        self.cache_potential_Government_Investment_in_Charging_Stations += d_government
+        self.cache_gov_Charging_subsidy_stock += d_subsidy
 
 class charging_station_availability_sector: 
     # charging_station_availability sector static variables
@@ -576,18 +624,11 @@ class charging_station_availability_sector:
 
     def __init__(self, model):
         self.model = model
+        #Stocks initial values
+        self.cache_installed_Charging_Stations = self.INITIAL_CHARGING_STATIONS
+        self.cache_charging_Stations_under_construction = self.INITIAL_CHARGING_STATIONS_UNDER_CONSTRUCTION
 
-    ##
-    @property
-    def Building_Charging_Station(self): #
-        """[Charging stations/Year]"""
-        return (self.model.investment_on_stations.Actual_Private_Investment_in_Charging_Stations+self.model.investment_on_sstations.Actual_Government_Investment_in_Charging_Stations)/self.model.charg_cost_and_profitability.CONSTRUCTION_COST_PER_STATION
-        
-    @property
-    def Decaying_Charging_Station(self): #
-        """[Charging stations/Year]"""
-        return delay(self.Finishing_Charging_Station, self.model.charg_cost_and_profitability.LIFETIME_OF_A_STATION, self.INITIAL_CHARGING_STATIONS/self.model.charg_cost_and_profitability.LIFETIME_OF_A_STATION)
-
+    ##    
     @property
     def availability_of_charging_station(self): #
         """[Dmnl]"""
@@ -595,47 +636,60 @@ class charging_station_availability_sector:
                 
     # Time dependent variables - DIRECT
     @property
-    def Finishing_Charging_Station(self): #
-        """[Charging stations/Year]"""
-        return self.charging_Stations_under_construction(self.model.t)/self.TIME_TO_BUILD_A_CHARGING_STATION
-
-    @property
     def charging_station_capacity_to_demand_ratio(self): #
         """[Dmnl]"""
-        return self.installed_Charging_Stations(self.model.t)/self.model.investment_on_stations.demand_of_charging_station
+        return self.installed_Charging_Stations /self.model.investment_on_stations.demand_of_charging_station
 
     @property
     def ratio_etruck_to_charging_station(self): #
         """[Vehicle/Charging stations]"""
-        return self.model.vehicle_fleet.etruck_Fleet_Size(self.model.t)/max(10**-9, self.installed_Charging_Stations(self.model.t))
-            
-    # Time functions
+        return self.model.vehicle_fleet.etruck_Fleet_Size/max(10**-9, self.installed_Charging_Stations)
+
+    ## FLOWS
+    # Infows
     @property
-    def installed_Charging_Stations(self, t): #
+    def Building_Charging_Station(self): #
+        """[Charging stations/Year]"""
+        return (self.model.investment_on_stations.Actual_Private_Investment_in_Charging_Stations+self.model.investment_on_sstations.Actual_Government_Investment_in_Charging_Stations)/self.model.charg_cost_and_profitability.CONSTRUCTION_COST_PER_STATION
+    
+    # In-betweenflows
+    @property
+    def Finishing_Charging_Station(self): #
+        """[Charging stations/Year]"""
+        return self.charging_Stations_under_construction /self.TIME_TO_BUILD_A_CHARGING_STATION
+
+    # Outflows
+    @property
+    def Decaying_Charging_Station(self): #
+        """[Charging stations/Year]"""
+        return delay(self.Finishing_Charging_Station, self.model.charg_cost_and_profitability.LIFETIME_OF_A_STATION, self.INITIAL_CHARGING_STATIONS/self.model.charg_cost_and_profitability.LIFETIME_OF_A_STATION)
+            
+    ## STOCKS
+    @property
+    def installed_Charging_Stations(self): #
         """[Charging stations]"""
-        if t <= 0:
-            res = self.INITIAL_CHARGING_STATIONS
-        else:
-            res = self.installed_Charging_Stations(t - self.model.dt)
-        return res
+        return self.cache_installed_Charging_Stations
 
     @property
-    def charging_Stations_under_construction(self, t): #
+    def charging_Stations_under_construction(self): #
         """[Charging stations]"""
-        if t <= 0:
-            res = self.INITIAL_CHARGING_STATIONS_UNDER_CONSTRUCTION + (self.Building_Charging_Station - self.Finishing_Charging_Station) * self.model.dt
-        else:
-            res = self.charging_Stations_under_construction(t - self.model.dt) + (self.Building_Charging_Station - self.Finishing_Charging_Station) * self.model.dt
-        return res
+        return self.cache_charging_Stations_under_construction + (self.Building_Charging_Station - self.Finishing_Charging_Station) * self.model.dt
+
+    @property
+    def update_stocks(self):
+        """**[NEW]** Updates the cache values from previous stocks, avoiding big loops when dealing with high *t*"""
+        d_installed = self.installed_Charging_Stations
+        d_construction = self.charging_Stations_under_construction
+        self.cache_installed_Charging_Stations += d_installed
+        self.cache_charging_Stations_under_construction += d_construction
 
 
 class vehicle_cost_sector:
-    # miscellaneous variables
-    time_for_diesel_price = _ #! Var not assigned
-    MAINTENANCE_COST_PER_KM_FOR_DIESEL_TRUCK = _ #! Var not assigned
-    MAINTENANCE_COST_PER_KM_FOR_ETRUCK = _ #! Var not assigned
-
     # vehicle_cost sector static variables
+    MAINTENANCE_COST_PER_KM_FOR_DIESEL_TRUCK = 1.32*0
+    """[SEK/KM]"""
+    MAINTENANCE_COST_PER_KM_FOR_ETRUCK = 0.99*0
+    """[SEK/KM]"""
     DIESEL_TRUCK_LIFETIME = 12
     """[Year]"""
     sensitivity_coefficient_for_VEHICLE_SUBSIDY = 1
@@ -651,18 +705,32 @@ class vehicle_cost_sector:
 
     def __init__(self, model):
         self.model = model
+        #Stocks initial values
+        self.cache_purchase_Cost_of_Etrucks = 5.5131e+06
+        self.cache_income_of_Diesel__Stock = 0
+        self.cache_gov_Fund_on_Diesel_Price = 0
+        self.cache_gov_vehicle_subsidy_stock = 0
+
+    def time_for_diesel_price(self):
+        return self.model.t
 
     def DIESEL_RETAIL_PRICE(self):
         """"swedish diesel price energimyndigheten [SEK/Litre]"""
         return (0.286*self.time_for_diesel_price-562.16)*self.sensitivity_coefficient_for_DIESEL
 
-    def cost_of_diesel_fuel_per_km(self):
-        """[SEK/KM]"""
-        return self.AVERAGE_CONSUMPTION_PER_KM_FOR_DIESEL_TRUCK*self.DIESEL_RETAIL_PRICE
-        
     def DIESEL_RETAIL_PRICE__SEK_per_kWh(self):
         """[SEK/kWh]"""
         return self.DIESEL_RETAIL_PRICE/self.model.emission.Kwh_to_Litre_converter
+
+    @property
+    def GOV_SUBSIDY_PERCENTAGE_ON_DIFFERENCE_BETWEEN_ETRUCK_AND_DIESEL_TRUCK_PURCHASE_COSTS(self): #
+        """Klimatklivet:Funding 40% of the additional cost compared to a similar conventional truck. [Dmnl]"""
+        return 0.4*(1-self.model.vehicle_fleet.share_of_electric_truck_in_total_fleet_size)*self.sensitivity_coefficient_for_VEHICLE_SUBSIDY
+        
+    ##
+    def cost_of_diesel_fuel_per_km(self):
+        """[SEK/KM]"""
+        return self.AVERAGE_CONSUMPTION_PER_KM_FOR_DIESEL_TRUCK*self.DIESEL_RETAIL_PRICE
     
     def annual_fuel_consumption__Litr__per_diesel_truck(self):
         """[Litre/(Vehicle*Year)]"""
@@ -703,107 +771,97 @@ class vehicle_cost_sector:
     def etruck_discounted_total_Opex(self): #
         """[SEK/Vehicle]"""
         return self.annual_operation_cost__opex__of_each_etruck*self.discount_factor_for_etruck
-                    
-    @property
-    def GOV_SUBSIDY_PERCENTAGE_ON_DIFFERENCE_BETWEEN_ETRUCK_AND_DIESEL_TRUCK_PURCHASE_COSTS(self): #
-        """Klimatklivet:Funding 40% of the additional cost compared to a similar conventional truck. [Dmnl]"""
-        return 0.4*(1-self.model.vehicle_fleet.share_of_electric_truck_in_total_fleet_size)*self.sensitivity_coefficient_for_VEHICLE_SUBSIDY
-
-    @property
-    def Decrease_in_purchase_cost_of_etruck(self): #
-        """[SEK/(Year*Vehicle)]"""
-        return self.model.utility_function.ratio_of_technology_maturity_to_goal*self.purchase_cost_gap/self.LEARNING_EFFECT_DELAY
-
-    @property
-    def Annual_Gov_Fund_on_Diesel_Price(self): #
-        """Positive amounts show that governments pay subsidies on DIESEL Negative amounts show that governments receive taxes on DIESEL"""
-        return (0.286*self.time_for_diesel_price-562.16)*self.annual_fuel_consumption__Litr__per_diesel_truck*self.Diesel_Truck_Fleet_Size*(1-self.sensitivity_coefficient_for_DIESEL)
-                
-    @property
-    def Annual_Income_of_Diesel__inflow(self): #
-        """[SEK/Year]"""
-        return self.annual_fuel_consumption__Litr__per_diesel_truck*self.Diesel_Truck_Fleet_Size*self.DIESEL_RETAIL_PRICE
-                           
+                                              
     #Time function dependant - DIRECT
     @property
     def purchase_cost_gap(self): #
         """[SEK/Vehicle]"""
-        return self.purchase_Cost_of_Etrucks(self.model.t)-self.PURCHASE_COST_OF_DIESEL_TRUCK
+        return self.purchase_Cost_of_Etrucks -self.PURCHASE_COST_OF_DIESEL_TRUCK
                 
-    @property
-    def Annual_gov_subsidy_on_vehicle_purchase_cost(self): #
-        """[SEK/Year]"""
-        self.GOV_SUBSIDY_PERCENTAGE_ON_DIFFERENCE_BETWEEN_ETRUCK_AND_DIESEL_TRUCK_PURCHASE_COSTS*(self.purchase_Cost_of_Etrucks(self.model.t)-self.PURCHASE_COST_OF_DIESEL_TRUCK)*self.model.vehicle_fleet.Etruck_Sales
-
     @property
     def purchase_cost_paid_by_freight_companies(self): #
         """Price e-truck - Subsidy percentage* (Diffference between electric and regular) [SEK/Vehicle]"""
-        return self.purchase_Cost_of_Etrucks(self.model.t)-(self.GOV_SUBSIDY_PERCENTAGE_ON_DIFFERENCE_BETWEEN_ETRUCK_AND_DIESEL_TRUCK_PURCHASE_COSTS*(self.purchase_Cost_of_Etrucks(self.model.t)-self.PURCHASE_COST_OF_DIESEL_TRUCK))
+        return self.purchase_Cost_of_Etrucks -(self.GOV_SUBSIDY_PERCENTAGE_ON_DIFFERENCE_BETWEEN_ETRUCK_AND_DIESEL_TRUCK_PURCHASE_COSTS*(self.purchase_Cost_of_Etrucks -self.PURCHASE_COST_OF_DIESEL_TRUCK))
 
     @property
     def electric_truck_total_cost(self): #
         """[SEK/Vehicle]"""
         return (self.purchase_cost_paid_by_freight_companies+self.etruck_discounted_total_Opex)
 
+    ## FLOWS
+    # Inflows
+    @property
+    def Annual_Income_of_Diesel__inflow(self): #
+        """[SEK/Year]"""
+        return self.annual_fuel_consumption__Litr__per_diesel_truck*self.Diesel_Truck_Fleet_Size*self.DIESEL_RETAIL_PRICE
+
+    @property
+    def Annual_Gov_Fund_on_Diesel_Price(self): #
+        """Positive amounts show that governments pay subsidies on DIESEL Negative amounts show that governments receive taxes on DIESEL"""
+        return (0.286*self.time_for_diesel_price-562.16)*self.annual_fuel_consumption__Litr__per_diesel_truck*self.Diesel_Truck_Fleet_Size*(1-self.sensitivity_coefficient_for_DIESEL)
+
+    @property
+    def Annual_gov_subsidy_on_vehicle_purchase_cost(self): #
+        """[SEK/Year]"""
+        self.GOV_SUBSIDY_PERCENTAGE_ON_DIFFERENCE_BETWEEN_ETRUCK_AND_DIESEL_TRUCK_PURCHASE_COSTS*(self.purchase_Cost_of_Etrucks -self.PURCHASE_COST_OF_DIESEL_TRUCK)*self.model.vehicle_fleet.Etruck_Sales
+    
+    # Outflows
+    @property
+    def Decrease_in_purchase_cost_of_etruck(self): #
+        """[SEK/(Year*Vehicle)]"""
+        return self.model.utility_function.ratio_of_technology_maturity_to_goal*self.purchase_cost_gap/self.LEARNING_EFFECT_DELAY
+    # XTRA (Using two previous stocks)
     @property
     def Diesel_Truck_Fleet_Size(self): #
         """[Vehicle]"""
-        return self.model.vehicle_fleet.total_Truck_Fleet_Size(self.model.t)-self.model.vehicle_fleet.etruck_Fleet_Size(self.model.t)
-                 
-    # Time functions
+        return self.model.vehicle_fleet.total_Truck_Fleet_Size-self.model.vehicle_fleet.etruck_Fleet_Size
+            
+    ## STOCKS
     @property
-    def purchase_Cost_of_Etrucks(self, t): #
+    def purchase_Cost_of_Etrucks(self): #
         """EV: 5,513,100 SEK/vehicle Diesel: 1,759,500 SEK/vehicle EV: 470,000 EURO/vehicle Diesel: 150,000 EURO/vehicle EUR to SEK: 11.73 (14 May 2024) [SEK/Vehicle]"""
-        if t <= 0:
-            res = 5.5131e+06 + ( - self.Decrease_in_purchase_cost_of_etruck) * self.model.dt
-        else:
-            res = self.purchase_Cost_of_Etrucks(t - self.model.dt) + ( - self.Decrease_in_purchase_cost_of_etruck) * self.model.dt
-        return res
+        return self.cache_purchase_Cost_of_Etrucks + ( - self.Decrease_in_purchase_cost_of_etruck) * self.model.dt
 
     @property
-    def income_of_Diesel__Stock(self, t): #
+    def income_of_Diesel__Stock(self): #
         """[SEK]"""
-        if t <= 0:
-            res = (self.Annual_Income_of_Diesel__inflow) * self.model.dt
-        else: 
-            res = self.income_of_Diesel__Stock(t - self.model.dt) + (self.Annual_Income_of_Diesel__inflow) * self.model.dt
-        return res
+        return self.cache_income_of_Diesel__Stock + (self.Annual_Income_of_Diesel__inflow) * self.model.dt
 
     @property
-    def gov_Fund_on_Diesel_Price(self, t): #
+    def gov_Fund_on_Diesel_Price(self): #
         """[SEK]"""
-        if t <= 0:
-            res = (self.Annual_Gov_Fund_on_Diesel_Price) * self.model.dt
-        else:
-            res = self.gov_Fund_on_Diesel_Price(t - self.model.dt) + (self.Annual_Gov_Fund_on_Diesel_Price) * self.model.dt
-        return res
+        return self.cache_gov_Fund_on_Diesel_Price + (self.Annual_Gov_Fund_on_Diesel_Price) * self.model.dt
 
     @property
-    def gov_vehicle_subsidy_stock(self, t): #
+    def gov_vehicle_subsidy_stock(self): #
         """[SEK]"""
-        if t <= 0:
-            res = (self.Annual_gov_subsidy_on_vehicle_purchase_cost) * self.model.dt
-        else:
-            res = self.gov_vehicle_subsidy_stock(t - self.model.dt) + (self.Annual_gov_subsidy_on_vehicle_purchase_cost) * self.model.dt
-        return res
+        return self.cache_gov_vehicle_subsidy_stock + (self.Annual_gov_subsidy_on_vehicle_purchase_cost) * self.model.dt
 
+    @property
+    def update_stocks(self):
+        """**[NEW]** Updates the cache values from previous stocks, avoiding big loops when dealing with high *t*"""
+        d_purchase = self.purchase_Cost_of_Etrucks
+        d_income = self.income_of_Diesel__Stock
+        d_gov_fund = self.gov_Fund_on_Diesel_Price
+        d_gov_vehicle = self.gov_vehicle_subsidy_stock 
+        self.cache_purchase_Cost_of_Etrucks += d_purchase
+        self.cache_income_of_Diesel__Stock += d_income
+        self.cache_gov_Fund_on_Diesel_Price += d_gov_fund
+        self.cache_gov_vehicle_subsidy_stock += d_gov_vehicle
 
 class utility_function_sector:
-    # miscellaneous variables
-    TIME = _ #! Var not assigned
-
     # utility_function sector static variables
     INITIAL_UTILITY_FUNCTION = 0.2
     """"initial value for utility function of e-trucks. Base on expert estimation [Dmnl]"""
     TIME_TO_PERCEIVED_UTILITY = 1
     """"The time it takes for users to recognize the benefits of adopting e-trucks. Base on expert estimation [Year]"""
-    TIME_TO_SPEND_RD_FUNDS = 3
+    TIME_TO_SPEND_RD_FUNDS = 3 #WHITE
     """"The duration over which research and development funds are spent. Based on interviews [Year]"""
     TECHNOLOGY_IMPROVEMENT_PER_SEK_SPENT = 1/(7.5*10^9)
     """Based on interviews: 10 times the annual R&D budget - considering that the technology will be mature in 10 years. We summed the R&D investment from 2017 until 10 years. Maximum value for this variable, if we want to introduce "more" delay, then we decrease this further. [technology/SEK]"""
     FACTOR_OF_GOV_INVESTMENT_ON_THE_TECH_MATURITY = 1
     """"magnitude of the impact of government investment on improving e-truck technology maturity.Base scenario value [Dmnl]"""
-    GOAL_OF_TECHNOLOGY_MATURITY_FUND = 1
+    GOAL_OF_TECHNOLOGY_MATURITY_FUND = 1 #WHITE
     """maximum level of technology maturity [technology]"""
     MISTRUST_EFFECT = 0.02
     """"The percentage of awareness lost due to mistrust between freight companies. Based on the expert interview, we should consider a percentage of awareness that is ruined during the adoption. [Dmnl]"""
@@ -818,30 +876,33 @@ class utility_function_sector:
 
     def __init__(self, model):
         self.model = model
+        #Stocks initial values
+        self.cache_utility_Function_of_Etruck = self.INITIAL_UTILITY_FUNCTION
+        self.cache_technology_Maturity_of_Etruck = 0
+        self.cache_rD_Fund_of_Etrucks = 1.6e+8
+        self.cache_gov_Tech_Maturity_Fund_Stock = 0    
 
-    def ratio_of_technology_maturity_to_goal(self):
-        """current technology maturity relative to its goal. [Dmnl]"""
-        return GRAPH("Technology_Maturity_of_E-truck"/self.GOAL_OF_TECHNOLOGY_MATURITY_FUND) Points: (0.000, 0.000), (1.000, 1.000) #! QUESTION: HOW TO REPRESENT THIS?
-    
-    def RD_PERCENTAGE_OF_ANNUAL_EARNING_OF_DIESEL_TRUCKS(self):
+    # (Green box)
+    @property
+    def RD_PERCENTAGE_OF_ANNUAL_EARNING_OF_DIESEL_TRUCKS(self): #
         """"The portion of income from diesel vehicle sales invested in research and development. Based on interviews with Scania experts, we assume that 1,5% of the income from diesel vehicle sales will be invested on R&D for improving technology maturity of electric vehicles. [Dmnl]"""
         return 0.015*(1-self.ratio_of_technology_maturity_to_goal)
-    
-    def RD_PERCENTAGE_OF_ANNUAL_EARNING_OF_ETRUCKS(self):
+
+    @property    
+    def RD_PERCENTAGE_OF_ANNUAL_EARNING_OF_ETRUCKS(self): #
         """"The portion of income from electric vehicle sales invested in research and development. Based on interviews with Scania experts, we assume that 3,5% of the income from electric vehicle sales will be invested on R&D for improving technology maturity of electric vehicles. [Dmnl]"""
         return 0.035*(1-self.ratio_of_technology_maturity_to_goal)
+
+    # (No box)
+    @property
+    def STOP_INVESTING_SWITCH(self): #
+        """if we are in the year 2040 and we have a lower than 10% market share of electric trucks, that shows that the electric truck project failed, and we should stop investing in this project, then we stop investing from the income of diesel trucks. It helps model in extreme conditions: when we don't have any e-truck sales, we don't have any technology maturity! [Dmnl]"""
+        return 0 if ((self.model.t >= 2040) & (self.model.vehicle_fleet.share_of_electric_truck_in_total_fleet_size <= 0.1)) else 1
     
+    ##
     def awareness_coefficient(self):
         """a coefficient to implement the mistruct effect [Dmnl]"""
         return 100*1000*(1-self.MISTRUST_EFFECT)
-    
-    def effect_of_technology_maturity(self):
-        """level of vehicle technology maturity [Dmnl]"""
-        return min(100*1000, self.ratio_of_technology_maturity_to_goal*100*1000)
-    
-    def Effect_of_technology_maturity_percentage(self):
-        """level of vehicle technology maturity in percentage [Dmnl]"""
-        return self.effect_of_technology_maturity/1000
     
     def utility_to_cost_of_diesel_truck(self):
         """the utility devided by total cost of d-trucks [Dmnl*Vehicle/SEK]"""
@@ -849,15 +910,20 @@ class utility_function_sector:
     
     ##
     @property
+    def effect_of_technology_maturity(self): #
+        """level of vehicle technology maturity [Dmnl]"""
+        return min(100*1000, self.ratio_of_technology_maturity_to_goal*100*1000)
+
+    @property
+    def Effect_of_technology_maturity_percentage(self): #
+        """level of vehicle technology maturity in percentage [Dmnl]"""
+        return self.effect_of_technology_maturity/1000
+
+    @property
     def Availability_of_charging_station_percentage(self): #
         """"The proportion that charging stations are functional and ready for use by electric vehicles. [Dmnl]"""
         return self.model.charg_availability.availability_of_charging_station/1000
         
-    @property
-    def STOP_INVESTING_SWITCH(self): #
-        """if we are in the year 2040 and we have a lower than 10% market share of electric trucks, that shows that the electric truck project failed, and we should stop investing in this project, then we stop investing from the income of diesel trucks. It helps model in extreme conditions: when we don't have any e-truck sales, we don't have any technology maturity! [Dmnl]"""
-        return 0 if ((self.TIME >= 2040) & (self.model.vehicle_fleet.share_of_electric_truck_in_total_fleet_size <= 0.1)) else 1
-
     @property
     def annual_RD_investment_from_diesel_truck_earnings(self): #
         """Investment allocated to research and development from diesel vehicle sales revenue. [SEK/year]"""
@@ -872,16 +938,6 @@ class utility_function_sector:
     def annual_gov_funding_for_improving_etruck_technology(self): #
         """Annual public investment to improve e-truck technology [SEK/year]"""
         return self.total_annual_RD_investment__corporates*self.FACTOR_OF_GOV_INVESTMENT_ON_THE_TECH_MATURITY*(1-self.ratio_of_technology_maturity_to_goal)
-    
-    @property
-    def rD_Investment(self): #
-        """Funds allocated to improve e-truck technology and innovation per year [SEK/year]"""  
-        return self.annual_gov_funding_for_improving_etruck_technology + self.total_annual_RD_investment__corporates
-
-    @property
-    def Annual_Gov_Tech_Maturity_Fund(self): #
-        """The annual public investment in technology maturity of e-trucks [SEK/year]"""
-        return self.annual_gov_funding_for_improving_etruck_technology       
         
     @property
     def awareness_of_the_technology(self): #
@@ -897,12 +953,7 @@ class utility_function_sector:
     def perceived_etruck_utility_function__attractiveness(self): #
         """Cobb-Douglas Utility Function (very common to calculate utility in economics), also use for production function [Dmnl]"""
         return (self.model.charg_availability.availability_of_charging_station^self.WEIGHT_OF_AVAILABILITY*self.awareness_of_the_technology^self.WEIGHT_OF_AWARENESS*self.effect_of_technology_maturity^self.WEIGHT_OF_MATURITY)/1000
-
-    @property
-    def Technology_Development_of_Etruck(self): #
-        """The process of acquiring knowledge and improvements in e-truck technology [technology/year]"""
-        return self.rD_Spending * self.TECHNOLOGY_IMPROVEMENT_PER_SEK_SPENT
-                
+          
     @property
     def U2P_ratio(self): #
         """to prevent denominator from being negative in the extreme test [Dmnl]"""
@@ -911,7 +962,8 @@ class utility_function_sector:
     @property
     def effect_of_utility_to_cost(self): #
         """rate of utility to cost of e-truck to d-truck scaled between 0 and 1 [Dmnl]"""
-        return GRAPH(self.U2P_ratio) Points: (0.000, 0.000), (1.000, 1.000) #! QUESTION: HOW TO REPRESENT THIS?
+        # GRAPH(self.U2P_ratio) Points: (0.000, 0.000), (1.000, 1.000) 
+        graph(self.U2P_ratio, [(0.000, 0.000), (1.000, 1.000)])
 
     @property
     def diesel_truck_sale(self): #
@@ -920,67 +972,83 @@ class utility_function_sector:
                 
     # Time function dependent - DIRECT
     @property
+    def ratio_of_technology_maturity_to_goal(self): #
+        """current technology maturity relative to its goal. [Dmnl]"""
+        # GRAPH(technology_Maturity_of_Etruck/self.GOAL_OF_TECHNOLOGY_MATURITY_FUND) Points: (0.000, 0.000), (1.000, 1.000) 
+        graph(self.technology_Maturity_of_Etruck /self.GOAL_OF_TECHNOLOGY_MATURITY_FUND, [(0.000, 0.000), (1.000, 1.000)])
+
+    @property
     def annual_RD_investment_from_etruck_earnings(self): #
         """Investment allocated to research and development from electric vehicle sales revenue. [SEK/year]"""
-        return self.model.vehicle_fleet.Etruck_Sales*self.model.vehicle_cost.purchase_Cost_of_Etrucks(self.model.t)*self.RD_PERCENTAGE_OF_ANNUAL_EARNING_OF_ETRUCKS
-
-    @property
-    def rD_Spending(self): #
-        """Expenditure on research and development [SEK/year]"""
-        return self.rD_Fund_of_Etrucks(self.model.t) / self.TIME_TO_SPEND_RD_FUNDS 
-                
-    @property
-    def Change_In_Utility(self): #
-        """The rate of annual change for the utility function [Dmnl/year]"""
-        return max(0, (self.perceived_etruck_utility_function__attractiveness - self.utility_Function_of_Etruck(self.model.t)) / self.TIME_TO_PERCEIVED_UTILITY)
-
+        return self.model.vehicle_fleet.Etruck_Sales*self.model.vehicle_cost.purchase_Cost_of_Etrucks *self.RD_PERCENTAGE_OF_ANNUAL_EARNING_OF_ETRUCKS
+    
     @property
     def utility_to_cost_of_etruck(self): #
         """the utility devided by total cost of e-trucks [Dmnl*Vehicle/SEK]"""
-        return self.utility_Function_of_Etruck(self.model.t)/(self.model.vehicle_cost.electric_truck_total_cost)
-                           
-    # Time functions
+        return self.utility_Function_of_Etruck /(self.model.vehicle_cost.electric_truck_total_cost)
+
+    ## FLOWS
+    # Inflows
     @property
-    def utility_Function_of_Etruck(self, t): #
+    def Change_In_Utility(self): #
+        """The rate of annual change for the utility function [Dmnl/year]"""
+        return max(0, (self.perceived_etruck_utility_function__attractiveness - self.utility_Function_of_Etruck ) / self.TIME_TO_PERCEIVED_UTILITY)
+
+    @property
+    def Technology_Development_of_Etruck(self): #
+        """The process of acquiring knowledge and improvements in e-truck technology [technology/year]"""
+        return self.RD_Spending * self.TECHNOLOGY_IMPROVEMENT_PER_SEK_SPENT
+
+    @property
+    def RD_Investment(self): #
+        """Funds allocated to improve e-truck technology and innovation per year [SEK/year]"""  
+        return self.annual_gov_funding_for_improving_etruck_technology + self.total_annual_RD_investment__corporates
+
+    @property
+    def Annual_Gov_Tech_Maturity_Fund(self): #
+        """The annual public investment in technology maturity of e-trucks [SEK/year]"""
+        return self.annual_gov_funding_for_improving_etruck_technology       
+        
+    # Outflows
+    @property
+    def RD_Spending(self): #
+        """Expenditure on research and development [SEK/year]"""
+        return self.rD_Fund_of_Etrucks  / self.TIME_TO_SPEND_RD_FUNDS 
+
+    ## STOCKS
+    @property
+    def utility_Function_of_Etruck(self): #
         """The level of utility (attractiveness) of an e-truck [Dmnl]"""
-        if t <= 0:
-            res = self.INITIAL_UTILITY_FUNCTION + (self.Change_In_Utility) * self.model.dt
-        else:
-            res = self.utility_Function_of_Etruck(t - self.model.dt) + (self.Change_In_Utility) * self.model.dt
-        return res
+        return self.cache_utility_Function_of_Etruck + (self.Change_In_Utility) * self.model.dt
 
     @property
-    def technology_Maturity_of_Etruck(self, t): #
+    def technology_Maturity_of_Etruck(self): #
         """"The level of advancement and development of electric truck technology, indicating how close it is to reaching its full potential and goals. [technology]"""
-        if t <= 0:
-            res = (self.Technology_Development_of_Etruck) * self.model.dt
-        else:
-            res = self.technology_Maturity_of_Etruck(t - self.model.dt) + (self.Technology_Development_of_Etruck) * self.model.dt
-        return res
-
+        return self.cache_technology_Maturity_of_Etruck + (self.Technology_Development_of_Etruck) * self.model.dt
+        
     @property
-    def rD_Fund_of_Etrucks(self, t): #
+    def rD_Fund_of_Etrucks(self): #
         """Total funds available for electric trucks research and development. [SEK]"""
-        if t <= 0:
-            res = 1.6e+8 + (self.rD_Investment - self.rD_Spending) * self.model.dt
-        else:
-            res = self.rD_Fund_of_Etrucks(t - self.model.dt) + (self.rD_Investment - self.rD_Spending) * self.model.dt
-        return res
+        return self.cache_rD_Fund_of_Etrucks + (self.RD_Investment - self.RD_Spending) * self.model.dt
 
     @property
-    def gov_Tech_Maturity_Fund_Stock(self, t): #
+    def gov_Tech_Maturity_Fund_Stock(self): #
         """The accumulation of public funds contributes to the technological maturity of electric trucks. [SEK]"""
-        if t <= 0:
-            res = (self.Annual_Gov_Tech_Maturity_Fund) * self.model.dt
-        else:
-            res = self.gov_Tech_Maturity_Fund_Stock(t - self.model.dt) + (self.Annual_Gov_Tech_Maturity_Fund) * self.model.dt
-        return res
+        return self.cache_gov_Tech_Maturity_Fund_Stock + (self.Annual_Gov_Tech_Maturity_Fund) * self.model.dt
 
+    @property
+    def update_stocks(self):
+        """**[NEW]** Updates the cache values from previous stocks, avoiding big loops when dealing with high *t*"""
+        d_utility = self.utility_Function_of_Etruck
+        d_tech_maturity = self.technology_Maturity_of_Etruck
+        d_rD_fund = self.rD_Fund_of_Etrucks
+        d_gov_tech_maturity = self.gov_Tech_Maturity_Fund_Stock
+        self.cache_utility_Function_of_Etruck += d_utility
+        self.cache_technology_Maturity_of_Etruck += d_tech_maturity
+        self.cache_rD_Fund_of_Etrucks += d_rD_fund
+        self.cache_gov_Tech_Maturity_Fund_Stock += d_gov_tech_maturity
 
 class vehicle_fleet_sector:
-    # miscellaneous variables
-    time_for_truck_sales = _ #! Var not assigned
-
     # vehicle_fleet sector static variables
     INITIAL_ETRUCK_FLEET_SIZE = 1
     """The starting number of electric trucks in the fleet [Vehicle]"""
@@ -991,52 +1059,65 @@ class vehicle_fleet_sector:
 
     def __init__(self, model):
         self.model = model
-
-    def Total_Truck_Sales(self):   
-        """Number of new trucks (both electric and diesel) that are sold in each year [Vehicle/Year]"""
-        return 148.556*self.time_for_truck_sales-292712
-      
-    def Total_Truck_Decommission(self):
-        """Number of total trucks that are removed from use in each year [Vehicle/Year]"""
-        return delay(self.Total_Truck_Sales, self.model.vehicle_cost.DIESEL_TRUCK_LIFETIME, self.INITIAL_TOTAL_TRUCK_FLEET_SIZE / self.model.vehicle_cost.DIESEL_TRUCK_LIFETIME)
-        
-    ##  
-    @property
-    def Etruck_Sales(self): #
-        """Number of new electric trucks that are sold in each year [Vehicle/Year]"""
-        return self.Total_Truck_Sales*self.model.utility_function.effect_of_utility_to_cost
+        #Stocks initial values
+        self.cache_etruck_Fleet_Size = self.INITIAL_ETRUCK_FLEET_SIZE
+        self.cache_total_Truck_Fleet_Size = self.INITIAL_TOTAL_TRUCK_FLEET_SIZE
 
     @property
-    def Etruck_Decommission(self): #
-        """Number of electric trucks that are removed from use in each year [Vehicle/Year]"""
-        return delay(self.Etruck_Sales, self.ETRUCK_LIFETIME, self.INITIAL_ETRUCK_FLEET_SIZE / self.ETRUCK_LIFETIME) 
+    def time_for_truck_sales(self):
+        return self.model.t
 
+    ## OUTPUTS
     @property
     def share_of_electric_truck_in_new_sales(self): #
         """The proportion of the total truck fleet that is sold to the market [Dmnl]"""
         return self.Etruck_Sales / self.Total_Truck_Sales
                 
-    # Time dependent variables - DIRECT
     @property 
     def share_of_electric_truck_in_total_fleet_size (self): #
         """The proportion of the total truck fleet that is electric [Dmnl]""" 
-        return self.etruck_Fleet_Size(self.model.t) / self.total_Truck_Fleet_Size(self.model.t)
+        return self.etruck_Fleet_Size / self.total_Truck_Fleet_Size
 
-    # Time functions 
-    @property   
-    def etruck_Fleet_Size(self, t): #
-        """The total number of electric trucks in the fleet [Vehicle]"""
-        if t <= 0:
-            res = self.INITIAL_ETRUCK_FLEET_SIZE + (self.Etruck_Sales - self.Etruck_Decommission) * self.model.dt
-        else:
-            res = self.etruck_Fleet_Size(t -self.model.dt) + (self.Etruck_Sales - self.Etruck_Decommission) * self.model.dt
-        return res
+    ## FLOWS
+    # Inflows
+    def Total_Truck_Sales(self):   
+        """Number of new trucks (both electric and diesel) that are sold in each year [Vehicle/Year]"""
+        return 148.556*self.time_for_truck_sales-292712
 
     @property
-    def total_Truck_Fleet_Size(self, t): #
+    def Etruck_Sales(self):
+        """Number of new electric trucks that are sold in each year [Vehicle/Year]"""
+        return self.Total_Truck_Sales*self.model.utility_function.effect_of_utility_to_cost
+    
+    # Outflows
+    def Total_Truck_Decommission(self):
+        """Number of total trucks that are removed from use in each year [Vehicle/Year]"""
+        return delay(self.Total_Truck_Sales, self.model.vehicle_cost.DIESEL_TRUCK_LIFETIME, self.INITIAL_TOTAL_TRUCK_FLEET_SIZE / self.model.vehicle_cost.DIESEL_TRUCK_LIFETIME)
+        
+    @property
+    def Etruck_Decommission(self): #
+        """Number of electric trucks that are removed from use in each year [Vehicle/Year]"""
+        return delay(self.Etruck_Sales, self.ETRUCK_LIFETIME, self.INITIAL_ETRUCK_FLEET_SIZE / self.ETRUCK_LIFETIME) 
+
+    ## STOCKS 
+    @property   
+    def etruck_Fleet_Size(self): #
+        """The total number of electric trucks in the fleet [Vehicle]"""
+        return self.cache_etruck_Fleet_Size + (self.Etruck_Sales - self.Etruck_Decommission) * self.model.dt
+        
+    @property
+    def total_Truck_Fleet_Size(self): #
         """The total number of trucks in the fleet [Vehicle]"""
-        if t <= 0:
-            res = self.INITIAL_TOTAL_TRUCK_FLEET_SIZE + (self.Total_Truck_Sales - self.Total_Truck_Decommission) * self.model.dt
-        else:
-            res = self.total_Truck_Fleet_Size(t - self.model.dt) + (self.Total_Truck_Sales - self.Total_Truck_Decommission) * self.model.dt
-        return res
+        return self.cache_total_Truck_Fleet_Size + (self.Total_Truck_Sales - self.Total_Truck_Decommission) * self.model.dt
+
+    @property
+    def update_stocks(self):
+        """**[NEW]** Updates the cache values from previous stocks, avoiding big loops when dealing with high *t*"""
+        d_etruck = self.etruck_Fleet_Size
+        d_total = self.total_Truck_Fleet_Size
+        self.cache_etruck_Fleet_Size += d_etruck
+        self.cache_total_Truck_Fleet_Size += d_total
+
+
+if __name__ == "__main__":
+    model = Model(0,0.01)
