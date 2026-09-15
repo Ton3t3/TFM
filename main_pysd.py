@@ -395,10 +395,99 @@ class investment_on_charging_stations_sector:
         "_integ_gov_charging_subsidy_stock" : 0
     }
 
+    ALIASES = {
+        "RELUCTANCE_TO_INVEST_RATE": "reluctance_to_invest_rate",
+        "TIME_TO_INVESTMENT_FOR_PRIVATE_SECTOR": "time_to_investment_for_private_sector",
+        "TIME_TO_CLOSE_GAP_FOR_GOV": "time_to_close_gap_for_gov",
+        "TIME_TO_CLOSE_GAP_FOR_PRIVATE_SECTOR": "time_to_close_gap_for_private_sector",
+        "EMISSION_LEVEL_IN_2010": "emission_level_in_2010",
+        "EMISSION_REDUCTION_GOAL_IN_2030": "emission_reduction_goal_in_2030",
+        "EMISSION_REDUCTION_GOAL_IN_2045": "emission_reduction_goal_in_2045",
+        "SWEDEN_ROAD_LENGHT": "sweden_road_lenght",
+        "ON_OFF_SWITCH_for_considering_future_charging_demand": "onoff_switch_for_considering_future_charging_demand",
+        "PLANNING_HORIZON": "planning_horizon",
+        "TIMEFRAME_OF_AVERAGE": "timeframe_of_average",
+        "IDEAL_DENSITY_OF_CHARGING_STATIONS_BASED_ON_EU_REGULATIONS": "ideal_density_of_charging_stations_based_on_eu_regulations",
+        # INITIAL
+        "INITIAL_POTENTIAL_PRIVATE_FUNDS": "initial_potential_private_fund",
+        "INITIAL_POTENTIAL_PUBLIC_FUNDS": "initial_potential_public_fund",
+        "INITIAL_GOV_CHARGING_SUBSIDY_STOCK": "_integ_gov_charging_subsidy_stock"
+    }
+
     def __init__(self, model):
         self.model = model.components
-    ##
 
+    @property
+    def RELUCTANCE_TO_INVEST_RATE(self):
+        """Percentage of investors that decide not to invest in the charging infrastructure even after all assessments. They are between 0 to 5 percent random number RANDOM NORMAL(0, 0.05 , 0 , 1 , 0 ) [1/Year]"""
+        return self.model.reluctance_to_invest_rate()
+
+    @property
+    def TIME_TO_INVESTMENT_FOR_PRIVATE_SECTOR(self):
+        """Based on expert opinion [Year]"""
+        return self.model.time_to_investment_for_private_sector()
+
+    @property
+    def TIME_TO_CLOSE_GAP_FOR_GOV(self):
+        """Based on interview and inspired by the time distance between elections [Year]"""
+        return self.model.time_to_close_gap_for_gov(self)
+
+    @property
+    def TIME_TO_CLOSE_GAP_FOR_PRIVATE_SECTOR(self):
+        """Based on expert opinion [Year]"""
+        return self.model.time_to_close_gap_for_private_sector(self)
+
+    @property               
+    def EMISSION_LEVEL_IN_2010(self):
+        """[kgCO2eq/Year]"""
+        return self.model.emission_level_in_2010()
+
+    @property
+    def EMISSION_REDUCTION_GOAL_IN_2030(self):
+        """[Dmnl]"""
+        return self.model.emission_reduction_goal_in_2030(self)
+
+    @property
+    def EMISSION_REDUCTION_GOAL_IN_2045(self):
+        """[Dmnl]"""
+        return self.model.emission_reduction_goal_in_2045(self)
+
+    @property
+    def SWEDEN_ROAD_LENGHT(self):
+        """Road lenght: 579 556 [KM]"""
+        return self.model.sweden_road_lenght(self)
+
+    @property
+    def ON_OFF_SWITCH_for_considering_future_charging_demand(self):
+        """[Dmnl]"""
+        return self.model.onoff_switch_for_considering_future_charging_demand(self)
+
+    @property
+    def PLANNING_HORIZON(self):
+        """How many years we want to consider as future demand and bring it into our calculation. We calculated the average of three previous years and crossed it over to the planning horizon (5 years) to calculate the total demand for the three coming years. [Year]"""
+        return self.model.planning_horizon(self)
+
+    @property
+    def TIMEFRAME_OF_AVERAGE(self):
+        """The average e-truck sales over a historical period (TIMEFRAME_OF_AVERAGE) are used to estimate the demand for a future time horizon (PLANNING_HORIZON). Thus, by analysing past sales trends, we can forecast potential demand for the upcoming period. [Year]"""
+        return self.model.timeframe_of_average(self)
+
+    @property
+    def IDEAL_DENSITY_OF_CHARGING_STATIONS_BASED_ON_EU_REGULATIONS(self):
+        """"1 station for every 50 km. Based on interviews and Masterplan ACEA. (2022). [Charging stations/KM]"""
+        return self.model.ideal_density_of_charging_stations_based_on_eu_regulations(self)
+
+    @property            
+    def INITIAL_POTENTIAL_PRIVATE_FUNDS(self):
+        """[SEK]"""
+        return self.model.initial_potential_private_fund(self)
+
+    @property
+    def INITIAL_POTENTIAL_PUBLIC_FUNDS(self):
+        """according to the klimatklivet data: 1,648,000 kr [SEK]"""
+        return self.model.initial_potential_public_fund(self)
+                    
+    ##
     def Goal_of_charging_stations_for_full_adoption_of_electric_trucks(self):
         """[Charging stations]"""
         return self.model.goal_of_charging_stations_for_full_adoption_of_electric_trucks()
@@ -495,18 +584,37 @@ class charging_station_availability_sector:
     # charging_station_availability sector static variables
     DEFAULT = {
         "time_to_build_a_charging_station" : 2,
-        #Based on interviews and REEL project report REEL. (2022). Regional Electrified Logistics. [Year]
         # INITIAL
         "initial_charging_stations_under_construction" : (3*90000*1.5)/(0.1*350*8760),
-        # There is a 3 truck difference between 2017 and 2018, and we calculated the demand for initial charging staions based on 350 KW chargers. [Charging stations]
         "initial_charging_stations" : (0.5*90000*1.5)/(0.1*350*8760)
-        # There is 1 truck in the year 2017, and we calculated the demand for initial charging staions based on 350 KW chargers. [Charging stations]  
     }
 
     STOCK_DEFAULTS = {}
 
+    ALIASES = {
+        "TIME_TO_BUILD_A_CHARGING_STATION": "time_to_build_a_charging_station",
+        # INITIAL
+        "INITIAL_CHARGING_STATIONS_UNDER_CONSTRUCTION": "initial_charging_stations_under_construction",
+        "INITIAL_CHARGING_STATIONS": "initial_charging_stations"
+    }
+
     def __init__(self, model):
         self.model = model.components
+
+    @property
+    def TIME_TO_BUILD_A_CHARGING_STATION(self):
+        """"Based on interviews and REEL project report REEL. (2022). Regional Electrified Logistics. [Year]"""
+        return self.model.time_to_build_a_charging_station()
+    
+    @property
+    def INITIAL_CHARGING_STATIONS_UNDER_CONSTRUCTION(self):
+        """There is a 3 truck difference between 2017 and 2018, and we calculated the demand for initial charging staions based on 350 KW chargers. [Charging stations]"""
+        return self.model.initial_charging_stations_under_construction()
+                
+    @property
+    def INITIAL_CHARGING_STATIONS(self):
+        """There is 1 truck in the year 2017, and we calculated the demand for initial charging staions based on 350 KW chargers. [Charging stations]"""
+        return self.model.initial_charging_stations()
 
     ##    
     def availability_of_charging_station(self): 
@@ -552,21 +660,13 @@ class vehicle_cost_sector:
     # vehicle_cost sector static variables
     DEFAULT = {
         "maintenance_cost_per_km_for_diesel_truck" : 1.32*0,
-        # [SEK/KM]
         "maintenance_cost_per_km_for_etruck" : 0.99*0,
-        # [SEK/KM]
         "diesel_truck_lifetime" : 12,
-        # [Year]
         "sensitivity_coefficient_for_vehicle_subsidy" : 1,
-        # Only use for sensitivity analysis [Dmnl]
         "sensitivity_coefficient_for_diesel" : 1,
-        # Only use for sensitivity analysis [Dmnl]
         "purchase_cost_of_diesel_truck" : 1.7595E+06,#1.76E+06,
-        # EV: 5,513,100 SEK/vehicle Diesel: 1,759,500 SEK/vehicle EV: 470,000 EURO/vehicle Diesel: 150,000 EURO/vehicle EUR to SEK: 11.73 (14 May 2024) [SEK/Vehicle]
         "learning_effect_delay" : 2,
-        # Based on expert opinion [Year]
         "average_consumption_per_km_for_diesel_truck" : 0.25,
-        # 100 km, 27 litre ICCT report, table 1 page 9 = 0.27 [Litre/KM]
         # INITIAL
         "initial_purchase_cost_of_etrucks" : 5.5131E+06
     }
@@ -577,8 +677,68 @@ class vehicle_cost_sector:
         "_integ_gov_vehicle_subsidy_stock" : 0            
     }
 
+    ALIASES = {
+        "MAINTENANCE_COST_PER_KM_FOR_DIESEL_TRUCK": "maintenance_cost_per_km_for_diesel_truck",
+        "MAINTENANCE_COST_PER_KM_FOR_ETRUCK": "maintenance_cost_per_km_for_etruck",
+        "DIESEL_TRUCK_LIFETIME": "diesel_truck_lifetime",
+        "sensitivity_coefficient_for_VEHICLE_SUBSIDY": "sensitivity_coefficient_for_vehicle_subsidy",
+        "sensitivity_coefficient_for_DIESEL": "sensitivity_coefficient_for_diesel",
+        "PURCHASE_COST_OF_DIESEL_TRUCK": "purchase_cost_of_diesel_truck",
+        "LEARNING_EFFECT_DELAY": "learning_effect_delay",
+        "AVERAGE_CONSUMPTION_PER_KM_FOR_DIESEL_TRUCK": "average_consumption_per_km_for_diesel_truck",
+        # INITIAL
+        "INITIAL_PURCHASE_COST_OF_ETRUCKS": "initial_purchase_cost_of_etrucks",
+        "INITIAL_INCOME_OF_DIESEL_STOCK": "_integ_income_of_diesel_stock",
+        "INITIAL_GOV_FUND_ON_DIESEL_PRICE": "_integ_gov_fund_on_diesel_price",
+        "INITIAL_GOV_VEHICLE_SUBSIDY_STOCK": "_integ_gov_vehicle_subsidy_stock"
+    }
+
     def __init__(self, model):
         self.model = model.components
+
+    @property
+    def MAINTENANCE_COST_PER_KM_FOR_DIESEL_TRUCK(self):
+        """[SEK/KM]"""
+        return self.model.maintenance_cost_per_km_for_diesel_truck()
+
+    @property
+    def MAINTENANCE_COST_PER_KM_FOR_ETRUCK(self):
+        """[SEK/KM]"""
+        return self.model.maintenance_cost_per_km_for_etruck()
+
+    @property
+    def DIESEL_TRUCK_LIFETIME(self):
+        """[Year]"""
+        return self.model.diesel_truck_lifetime()
+
+    @property
+    def sensitivity_coefficient_for_VEHICLE_SUBSIDY(self):
+        """Only use for sensitivity analysis [Dmnl]"""
+        return self.model.sensitivity_coefficient_for_vehicle_subsidy()
+
+    @property
+    def sensitivity_coefficient_for_DIESEL(self):
+        """Only use for sensitivity analysis [Dmnl]"""
+        return self.model.sensitivity_coefficient_for_diesel()
+
+    @property
+    def PURCHASE_COST_OF_DIESEL_TRUCK(self):
+        """EV: 5,513,100 SEK/vehicle Diesel: 1,759,500 SEK/vehicle EV: 470,000 EURO/vehicle Diesel: 150,000 EURO/vehicle EUR to SEK: 11.73 (14 May 2024) [SEK/Vehicle]"""
+        return self.model.purchase_cost_of_diesel_truck()
+
+    @property
+    def LEARNING_EFFECT_DELAY(self):
+        """Based on expert opinion [Year]"""
+        return self.model.learning_effect_delay()
+
+    @property
+    def AVERAGE_CONSUMPTION_PER_KM_FOR_DIESEL_TRUCK(self):
+        """100 km, 27 litre ICCT report, table 1 page 9 = 0.27 [Litre/KM]"""
+        return self.model.average_consumption_per_km_for_diesel_truck()
+
+    @property
+    def INITIAL_PURCHASE_COST_OF_ETRUCKS(self):
+        return self.model.initial_purchase_cost_of_etrucks()
 
     ##
     def time_for_diesel_price(self):
@@ -696,28 +856,17 @@ class utility_function_sector:
     # utility_function sector static variables
     DEFAULT = {
         "time_to_perceived_utility" : 1,
-        # The time it takes for users to recognize the benefits of adopting e-trucks. Base on expert estimation [Year]
         "time_to_spend_rd_funds" : 3, #WHITE
-        # The duration over which research and development funds are spent. Based on interviews [Year]
         "technology_improvement_per_sek_spent" : 1/(7.5E+09),
-        # Based on interviews: 10 times the annual R&D budget - considering that the technology will be mature in 10 years. We summed the R&D investment from 2017 until 10 years. Maximum value for this variable, if we want to introduce "more" delay, then we decrease this further. [technology/SEK]
         "factor_of_gov_investment_on_the_tech_maturity" : 1,
-        # magnitude of the impact of government investment on improving e-truck technology maturity.Base scenario value [Dmnl]
         "goal_of_technology_maturity_fund" : 1, #WHITE
-        # maximum level of technology maturity [technology]
         "mistrust_effect" : 0.02,
-        # The percentage of awareness lost due to mistrust between freight companies. Based on the expert interview, we should consider a percentage of awareness that is ruined during the adoption. [Dmnl]
         "based_utility_for_diesel_truck" : 100,
-        # The level of utility (attractiveness) of an d-truck. Based on the expert interview [Dmnl]
         "weight_of_availability" : 0.45,
-        # this variable represents the weight of the availability of infrastructure influence on the e-truck utility, in comparison with the other influences. Based on the expert interview [Dmnl]
         "weight_of_awareness" : 0.4,
-        # this variable represents the weight of the awareness influence on the e-truck utility, in comparison with the other influences. Based on the expert interview [Dmnl]
         "weight_of_maturity" : 0.15,
-        # this variable represents the weight of the vehicle technology maturity influence on the e-truck utility, in comparison with the other influences. Based on the expert interview [Dmnl]
         # INITIAL
         "initial_utility_function" : 0.2
-        # initial value for utility function of e-trucks. Base on expert estimation [Dmnl]      
     }
 
     STOCK_DEFAULTS = {
@@ -726,8 +875,82 @@ class utility_function_sector:
         "_integ_gov_tech_maturity_fund_stock" : 0 
     }
 
+    # readable_name -> canonical key (DEFAULT key / PySD py_name)
+    ALIASES = {
+        "TIME_TO_PERCEIVED_UTILITY": "time_to_perceived_utility",
+        "TIME_TO_SPEND_RD_FUNDS": "time_to_spend_rd_funds",
+        "TECHNOLOGY_IMPROVEMENT_PER_SEK_SPENT": "time_to_spend_rd_funds",
+        "FACTOR_OF_GOV_INVESTMENT_ON_THE_TECH_MATURITY": "factor_of_gov_investment_on_the_tech_maturity",
+        "GOAL_OF_TECHNOLOGY_MATURITY_FUND": "goal_of_technology_maturity_fund",
+        "MISTRUST_EFFECT": "mistrust_effect",
+        "BASED_UTILITY_FOR_DIESEL_TRUCK": "based_utility_for_diesel_truck",
+        "WEIGHT_OF_AVAILABILITY": "weight_of_availability",
+        "WEIGHT_OF_AWARENESS": "weight_of_awareness",
+        "WEIGHT_OF_MATURITY": "weight_of_maturity",
+        #INITIAL
+        "INITIAL_UTILITY_FUNCTION": "initial_utility_function",
+        "INITIAL_TECHNOLOGY_MATURITY_OF_ETRUCK": "_integ_technology_maturity_of_etruck",
+        "INITIAL_RD_FUND_OF_ETRUCKS": "_integ_rd_fund_of_etrucks",
+        "INITIAL_GOV_TECH_MATURITY_FUND_STOCK": "_integ_gov_tech_maturity_fund_stock"
+    }
+
     def __init__(self, model):
         self.model = model.components
+
+    @property
+    def TIME_TO_PERCEIVED_UTILITY(self):
+        """The time it takes for users to recognize the benefits of adopting e-trucks. Base on expert estimation [Year]"""
+        return self.model.time_to_perceived_utility()
+
+    @property
+    def TIME_TO_SPEND_RD_FUNDS(self):
+        """The duration over which research and development funds are spent. Based on interviews [Year]"""
+        return self.model.time_to_spend_rd_funds()
+
+    @property
+    def TECHNOLOGY_IMPROVEMENT_PER_SEK_SPENT(self):
+        """Based on interviews: 10 times the annual R&D budget - considering that the technology will be mature in 10 years. We summed the R&D investment from 2017 until 10 years. Maximum value for this variable, if we want to introduce "more" delay, then we decrease this further. [technology/SEK]"""
+        return self.model.time_to_spend_rd_funds()
+
+    @property   
+    def FACTOR_OF_GOV_INVESTMENT_ON_THE_TECH_MATURITY(self):
+        """magnitude of the impact of government investment on improving e-truck technology maturity.Base scenario value [Dmnl]"""
+        return self.model.factor_of_gov_investment_on_the_tech_maturity()
+
+    @property
+    def GOAL_OF_TECHNOLOGY_MATURITY_FUND(self):
+        """maximum level of technology maturity [technology]"""
+        return self.model.goal_of_technology_maturity_fund()
+
+    @property
+    def MISTRUST_EFFECT(self):
+        """The percentage of awareness lost due to mistrust between freight companies. Based on the expert interview, we should consider a percentage of awareness that is ruined during the adoption. [Dmnl]"""
+        return self.model.mistrust_effect()
+
+    @property
+    def BASED_UTILITY_FOR_DIESEL_TRUCK(self):
+        """"The level of utility (attractiveness) of an d-truck. Based on the expert interview [Dmnl]"""
+        return self.model.based_utility_for_diesel_truck()
+
+    @property           
+    def WEIGHT_OF_AVAILABILITY(self):
+        """"this variable represents the weight of the availability of infrastructure influence on the e-truck utility, in comparison with the other influences. Based on the expert interview [Dmnl]"""
+        return self.model.weight_of_availability()
+
+    @property
+    def WEIGHT_OF_AWARENESS(self):
+        """"this variable represents the weight of the awareness influence on the e-truck utility, in comparison with the other influences. Based on the expert interview [Dmnl]"""
+        return self.model.weight_of_awareness()
+
+    @property
+    def WEIGHT_OF_MATURITY(self):
+        """"this variable represents the weight of the vehicle technology maturity influence on the e-truck utility, in comparison with the other influences. Based on the expert interview [Dmnl]"""
+        return self.model.weight_of_maturity()
+
+    @property
+    def INITIAL_UTILITY_FUNCTION(self):
+        """initial value for utility function of e-trucks. Base on expert estimation [Dmnl]""" 
+        return self.model.initial_utility_function()
      
     # (Green box) (still "constants")
     def RD_PERCENTAGE_OF_ANNUAL_EARNING_OF_DIESEL_TRUCKS(self): 
@@ -861,19 +1084,40 @@ class vehicle_fleet_sector:
     # vehicle_fleet sector static variables
     DEFAULT = {
         "etruck_lifetime" : 12,
-        # The average operational lifespan of electric vehicles [Year]
         # INITIAL
         "initial_etruck_fleet_size" : 1,
-        # The starting number of electric trucks in the fleet [Vehicle]
         "initial_total_truck_fleet_size" : 83025
-        # The starting number of total trucks in the fleet [Vehicle]
     }
 
     STOCK_DEFAULTS = {}
 
+    # readable_name -> canonical key (DEFAULT key / PySD py_name)
+    ALIASES = {
+        "ETRUCK_LIFETIME": "etruck_lifetime",
+        #INITIAL
+        "INITIAL_ETRUCK_FLEET_SIZE": "initial_etruck_fleet_size",
+        "INITIAL_TOTAL_TRUCK_FLEET_SIZE": "initial_total_truck_fleet_size"
+    }
+
     def __init__(self, model):
         self.model = model.components
-        
+
+    @property
+    def ETRUCK_LIFETIME(self):
+        """The average operational lifespan of electric vehicles [Year]"""
+        return self.model.etruck_lifetime()
+
+    @property
+    def INITIAL_ETRUCK_FLEET_SIZE(self): 
+        """The starting number of electric trucks in the fleet [Vehicle]"""
+        return self.model.initial_etruck_fleet_size()
+
+    @property
+    def INITIAL_TOTAL_TRUCK_FLEET_SIZE(self):
+        """The starting number of total trucks in the fleet [Vehicle]"""
+        return self.model.initial_total_truck_fleet_size()
+
+
     def time_for_truck_sales(self):
         return self.model.time_for_truck_sales()
 
@@ -924,12 +1168,30 @@ def baseline_scenario():
         merged_stocks_def.update(getattr(sector_cls, "STOCK_DEFAULTS", {}))
     return merged_def, merged_stocks_def
 
-def apply_scenario(model, overrides=None, stock_overrides=None):
+def collect_aliases():
+    SECTORS = [emission_sector, vehicle_fleet_sector, vehicle_cost_sector, utility_function_sector, charging_station_cost_and_profitability_sector, charging_station_availability_sector,investment_on_charging_stations_sector]
+    merged_aliases = {}
+    for sector_cls in SECTORS:
+        for alias, canonical in getattr(sector_cls, "ALIASES", {}).items():
+            if alias in merged_aliases and merged_aliases[alias] != canonical:
+                raise ValueError(f"Alias '{alias}' maps to different canonical names across sectors")
+            merged_aliases[alias] = canonical
+    return merged_aliases
+
+def apply_scenario(model, overrides=None):
     baseline_defaults,baseline_stock_defaults = baseline_scenario()
-    scenario = {**baseline_defaults, **(overrides or {})}
+    aliases = collect_aliases()
+
+    # resolve alias names -> canonical py_names; leave already-canonical names untouched
+    resolved = {aliases.get(key, key): value for key, value in (overrides or {}).items()} #Including both DEFAULT and STOCK_DEFAULTS variables
+
+    const_changes = {k: v for k, v in resolved.items() if k in baseline_defaults}
+    initial_stock_changes = {k: v for k, v in resolved.items() if k not in const_changes}
+
+    scenario = {**baseline_defaults, **const_changes}
     model.set_components(scenario)
 
-    init_scenario = {**baseline_stock_defaults, **(stock_overrides or {})}
+    init_scenario = {**baseline_stock_defaults, **initial_stock_changes}
     for stock_attr, value in init_scenario.items():
         stock = getattr(model.components, stock_attr)
         stock.init_func = lambda v=value: v   # v=value avoids late-binding bug in the loop
@@ -937,22 +1199,26 @@ def apply_scenario(model, overrides=None, stock_overrides=None):
 
 if __name__ == "__main__":
 
-    model = pysd.read_vensim("C:/Users/tonoz/Desktop/KTH/TFM/Appendix1_Supplementary_material_Vensim_simulation_model.mdl", initialize=False)
+    model = pysd.read_vensim("C:/Users/tonoz/Desktop/KTH/TFM/Appendix1_Supplementary_material_Vensim_simulation_model.mdl")
 
     # var = model.doc
     # name_map = dict(zip(var["Real Name"], var["Py Name"]))
     # var.to_csv("C:/Users/tonoz/Desktop/KTH/TFM/output.csv", index=False)
 
     apply_scenario(model) # Set-up of static variables / initial values of stocks for the current simulation
+    # apply_scenario(model, {"ETRUCK_LIFETIME" : 2}) # Set-up of static variables / initial values of stocks for the current simulation
+    # apply_scenario(model, {"ETRUCK_LIFETIME" : 2, "INITIAL_TECHNOLOGY_MATURITY_OF_ETRUCK" : 10}) # Set-up of static variables / initial values of stocks for the current simulation
     output = ModelOutput()
     model.set_stepper(output, final_time=2060) # Original Vensim simulation from 2017 to 2060
 
     model_class = Model(model) # Initialization of reader's class tree
 
     #TESTING THE OUTPUTS
+    print(model_class.vehicle_fleet.ETRUCK_LIFETIME)  # self.etruck_lifetime = self.model.etruck_lifetime
+
     print("Time:", model_class.t)
     print(model_class.charg_cost_and_profitability.max_possible_utilization_rate_of_a_station__lookup_number_of_etrucks()) #VAR
-    print(model_class.charg_cost_and_profitability.income_of_electricity_stock()) #STOCK
+    print("technology Maturity of Etruck [STOCK]: ",model_class.utility_function.technology_Maturity_of_Etruck()) #STOCK
     print(model_class.charg_cost_and_profitability.Annual_income_of_electricity__inflow()) #FLOW
     print(model_class.charg_cost_and_profitability.DEFAULT["average_mileage_per_vehicle_per_year"]) #STATIC VAR
     # print(model_class.charg_cost_and_profitability.STOCK_DEFAULTS["_integ_income_of_electricity_stock"]) #INITIAL VALUE OF STOCK
@@ -961,14 +1227,14 @@ if __name__ == "__main__":
 
     print("\nTime:", model_class.t)
     print(model_class.charg_cost_and_profitability.max_possible_utilization_rate_of_a_station__lookup_number_of_etrucks()) #VAR
-    print(model_class.charg_cost_and_profitability.income_of_electricity_stock()) #STOCK
+    print("technology Maturity of Etruck [STOCK]: ",model_class.utility_function.technology_Maturity_of_Etruck()) #STOCK
     print(model_class.charg_cost_and_profitability.Annual_income_of_electricity__inflow()) #FLOW
     print(model_class.charg_cost_and_profitability.DEFAULT["average_mileage_per_vehicle_per_year"]) #STATIC VAR
 
-    model.step(1)
+    # model.step(1)
 
-    print("\nTime:", model_class.t)
-    print(model_class.charg_cost_and_profitability.max_possible_utilization_rate_of_a_station__lookup_number_of_etrucks()) #VAR
-    print(model_class.charg_cost_and_profitability.income_of_electricity_stock()) #STOCK
-    print(model_class.charg_cost_and_profitability.Annual_income_of_electricity__inflow()) #FLOW
-    print(model_class.charg_cost_and_profitability.DEFAULT["average_mileage_per_vehicle_per_year"]) #STATIC VAR
+    # print("\nTime:", model_class.t)
+    # print(model_class.charg_cost_and_profitability.max_possible_utilization_rate_of_a_station__lookup_number_of_etrucks()) #VAR
+    # print("technology Maturity of Etruck [STOCK]: ",model_class.utility_function.technology_Maturity_of_Etruck()) #STOCK
+    # print(model_class.charg_cost_and_profitability.Annual_income_of_electricity__inflow()) #FLOW
+    # print(model_class.charg_cost_and_profitability.DEFAULT["average_mileage_per_vehicle_per_year"]) #STATIC VAR
