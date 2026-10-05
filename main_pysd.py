@@ -1,4 +1,8 @@
 # CODE BY EMILIO ANTONIO ZUBIZARRETA PELAYO
+
+import ast
+import numpy as np
+import pandas as pd
 import pysd
 import inspect
 from pysd.py_backend.output import ModelOutput
@@ -10,6 +14,26 @@ from class_folder.charging_station_availability_sector_class import charging_sta
 from class_folder.vehicle_cost_sector_class import vehicle_cost_sector
 from class_folder.utility_function_sector import utility_function_sector
 from class_folder.vehicle_fleet_sector_class import vehicle_fleet_sector
+import LTM
+
+import warnings
+
+
+def get_return_expression(func):
+    """Parses a function's source code and returns the return expression as a string."""
+    try:
+        source = inspect.getsource(func)
+        parsed = ast.parse(source)
+        
+        # Traverse nodes to find Return statements
+        for node in ast.walk(parsed):
+            if isinstance(node, ast.Return):
+                # Unparse converts the AST expression node back into a readable code string
+                return ast.unparse(node.value)
+    except Exception as e:
+        return f"Could not parse: {e}"
+    return "No return statement found"
+
 
 class Model:
     def __init__(self, model):
@@ -79,44 +103,86 @@ def apply_scenario(model, overrides=None):
 
 if __name__ == "__main__":
 
+    warnings.filterwarnings(
+    "ignore",
+    message="Replacing a variable by a constant value.",
+    category=UserWarning,
+    )
+
+    warnings.filterwarnings(
+    "ignore",
+    message="Replacing a constant value with a callable",
+    category=UserWarning,
+    )
+
     model = pysd.read_vensim("C:/Users/tonoz/Desktop/KTH/TFM/Appendix1_Supplementary_material_Vensim_simulation_model.mdl")
 
     # var = model.doc
     # name_map = dict(zip(var["Real Name"], var["Py Name"]))
     # var.to_csv("C:/Users/tonoz/Desktop/KTH/TFM/output.csv", index=False)
 
-    # apply_scenario(model) # Set-up of static variables / initial values of stocks for the current simulation
+    apply_scenario(model) # Set-up of static variables / initial values of stocks for the current simulation
     # apply_scenario(model, {"ETRUCK_LIFETIME" : 2}) # Set-up of static variables / initial values of stocks for the current simulation
-    apply_scenario(model, {"ETRUCK_LIFETIME" : 2, "INITIAL_TECHNOLOGY_MATURITY_OF_ETRUCK" : 10}) # Set-up of static variables / initial values of stocks for the current simulation
+    # apply_scenario(model, {"ETRUCK_LIFETIME" : 2, "INITIAL_TECHNOLOGY_MATURITY_OF_ETRUCK" : 10}) # Set-up of static variables / initial values of stocks for the current simulation
     output = ModelOutput()
-    model.set_stepper(output, final_time=2060) # Original Vensim simulation from 2017 to 2060
 
     model_class = Model(model) # Initialization of reader's class tree
 
+    # model.set_stepper(output, final_time=2060)
+    model.set_stepper(output, final_time=2060, step_vars=[model_class.charg_cost_and_profitability.ALIASES["LIFETIME_OF_A_STATION"]]) # Original Vensim simulation from 2017 to 2060
+
+
     #TESTING THE OUTPUTS
-    print(model_class.vehicle_fleet.ETRUCK_LIFETIME)  # self.etruck_lifetime = self.model.ETRUCK_LIFETIME
-    print(model_class.investment_on_stations.future_demand_of_charging_station) #SMOOTH
-    print(model_class.vehicle_fleet.Etruck_Decommission) #DELAY
+    df = LTM.link_score(model, model_class)
+    
+    ## PRINT THE RETURN STATEMENTS OF ALL FUNCTIONS IN THE MODEL, BUT DOES NOT HELP AT ALL
+    # # Get the list of dynamic variables from dependencies
+    # dynamic_vars = [key for key, val in model._dependencies.items() if len(val) != 0]
+    # static_vars = [key for key in model._dependencies.keys() if key not in dynamic_vars]
+    # dynamic_vars = [var for var in dynamic_vars if var not in ["saveper", "OUTPUTS"]]  # Exclude "OUTPUTS" from the list of dynamic variables
+
+    # # max_dependency = max(len(val) for val in model._dependencies.values())
+    # # key_with_max_dependency = max(model._dependencies, key=lambda k: len(model._dependencies[k]))
+
+    # max_dependency = 0
+    # key_with_max_dependency = None
+    # for key, val in model._dependencies.items():
+    #     if key != "OUTPUTS":
+    #         if len(val) > max_dependency:
+    #             max_dependency = len(val)
+    #             key_with_max_dependency = key
+    
+    
+    # print(f"Maximum number of dependencies for any variable: {max_dependency}")
+    # print(f"Variable with maximum dependencies: {key_with_max_dependency}")
+
+    # for var_name in dynamic_vars:
+    #     # Check if the component exists in model.components
+    #     if hasattr(model.components, var_name):
+    #         func = getattr(model.components, var_name)
+            
+    #         return_stmt = get_return_expression(func)
+    #         print(f"{var_name} -> {return_stmt}")
+
+
+
 
     print("Time:", model_class.t)
-    print(model_class.charg_cost_and_profitability.max_possible_utilization_rate_of_a_station__lookup_number_of_etrucks()) #VAR
-    print("technology Maturity of Etruck [STOCK]: ",model_class.utility_function.technology_Maturity_of_Etruck()) #STOCK
-    print(model_class.charg_cost_and_profitability.Annual_income_of_electricity__inflow()) #FLOW
-    print(model_class.charg_cost_and_profitability.DEFAULT["average_mileage_per_vehicle_per_year"]) #STATIC VAR
-    # print(model_class.charg_cost_and_profitability.STOCK_DEFAULTS["_integ_income_of_electricity_stock"]) #INITIAL VALUE OF STOCK
+    print("-·-·-·-·-·-·-·-·-·-")
+    print("LIFETIME OF A STATION:",model_class.charg_cost_and_profitability.LIFETIME_OF_A_STATION()) #VAR
+    # print("total operational cost per station (accumulated over lifetime years)",model_class.charg_cost_and_profitability.total_operational_cost_per_station__accumulated_over_lifetime_years())
+    print("technology Maturity of Etruck [der]: ",model_class.utility_function.der_technology_Maturity_of_Etruck()) #STOCK
+    print("technology Maturity of Etruck [val]: ",model_class.utility_function.technology_Maturity_of_Etruck()) #STOCK
+
     
-    model.step(1)
-
-    print("\nTime:", model_class.t)
-    print(model_class.charg_cost_and_profitability.max_possible_utilization_rate_of_a_station__lookup_number_of_etrucks()) #VAR
-    print("technology Maturity of Etruck [STOCK]: ",model_class.utility_function.technology_Maturity_of_Etruck()) #STOCK
-    print(model_class.charg_cost_and_profitability.Annual_income_of_electricity__inflow()) #FLOW
-    print(model_class.charg_cost_and_profitability.DEFAULT["average_mileage_per_vehicle_per_year"]) #STATIC VAR
-
-    # model.step(1)
-
-    # print("\nTime:", model_class.t)
-    # print(model_class.charg_cost_and_profitability.max_possible_utilization_rate_of_a_station__lookup_number_of_etrucks()) #VAR
-    # print("technology Maturity of Etruck [STOCK]: ",model_class.utility_function.technology_Maturity_of_Etruck()) #STOCK
-    # print(model_class.charg_cost_and_profitability.Annual_income_of_electricity__inflow()) #FLOW
-    # print(model_class.charg_cost_and_profitability.DEFAULT["average_mileage_per_vehicle_per_year"]) #STATIC VAR
+    for n in range(40):
+        if n%10 == 5:
+            model.step(1, {model_class.charg_cost_and_profitability.ALIASES["LIFETIME_OF_A_STATION"]: model_class.charg_cost_and_profitability.LIFETIME_OF_A_STATION()+1})
+        else:
+            model.step(1)
+        print("\nTime:", model_class.t)
+        print("-·-·-·-·-·-·-·-·-·-")
+        print("LIFETIME OF A STATION:",model_class.charg_cost_and_profitability.LIFETIME_OF_A_STATION()) #VAR
+        # print("total operational cost per station (accumulated over lifetime years)",model_class.charg_cost_and_profitability.total_operational_cost_per_station__accumulated_over_lifetime_years())
+        print("technology Maturity of Etruck [der]: ",model_class.utility_function.der_technology_Maturity_of_Etruck()) #STOCK
+        print("technology Maturity of Etruck [val]: ",model_class.utility_function.technology_Maturity_of_Etruck()) #STOCK
