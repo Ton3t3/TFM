@@ -1,0 +1,199 @@
+,x,z,ls,stock_bool
+0,charging_capex_to_opex_conversion_factor,['operational_maintenance_cost_of_a_station_based_on_percentage_of_capex'],[0.0],False
+1,construction_cost_per_station,"['operational_maintenance_cost_of_a_station_based_on_percentage_of_capex', 'construction_cost_per_station_paid_by_infra_providers', 'annual_gov_subsidy_on_charging_2', 'private_portion_of_investment_per_station', 'building_charging_station', 'gov_portion_of_investment_per_station']","[0.0, 0.0, 0.0, 0.0, 0.0, 0.0]",False
+2,gov_subsidy_percentage_on_construction_cost_of_charging_stations,"['construction_cost_per_station_paid_by_infra_providers', 'annual_gov_subsidy_on_charging_2', 'private_portion_of_investment_per_station', 'gov_portion_of_investment_per_station']","[np.float64(-1.0), np.float64(0.00012368429537701605), np.float64(-1.0), np.float64(1.0)]",False
+3,average_power_of_charging_station,"['construction_cost_per_station', 'maximum_nominal_capacity_of_a_charging_station_per_year_new', 'average_power_of_charging_station_gap']","[0.0, 0.0, 0.0]",True
+4,construction_cost_per_kw,['construction_cost_per_station'],[0.0],False
+5,building_charging_station,"['annual_gov_subsidy_on_charging_2', 'charging_stations_under_construction']","[np.float64(1.0001317278070077), 1.5542532290208024]",False
+6,cost_of_electricity_per_station_per_year,['operation_cost_per_station_per_year'],[np.float64(1.0)],False
+7,operational_maintenance_cost_of_a_station_based_on_percentage_of_capex,['operation_cost_per_station_per_year'],[0.0],False
+8,ratio_of_technology_maturity_to_goal,"['rd_percentage_of_annual_earning_of_diesel_trucks', 'rd_percentage_of_annual_earning_of_etrucks', 'decrease_in_purchase_cost_of_etruck', 'annual_gov_funding_for_improving_etruck_technology', 'effect_of_technology_maturity']","[np.float64(-1.0), np.float64(-1.0), np.float64(1.0), np.float64(-0.9831515561149626), np.float64(1.0)]",False
+9,time_for_diesel_price,"['diesel_retail_price', 'annual_gov_fund_on_diesel_price']","[np.float64(1.0), 0.0]",False
+10,sensitivity_coefficient_for_diesel,"['diesel_retail_price', 'annual_gov_fund_on_diesel_price']","[0.0, 0.0]",False
+11,operation_and_maintenance_cost_per_kwh_utilized_capacity,['operational_maintenance_cost_of_a_station_based_on_utilisation'],[0.0],False
+12,utilized_capacity_of_a_station_per_year,"['operational_maintenance_cost_of_a_station_based_on_utilisation', 'total_power_supply_by_all_charging_station_per_year', 'charge_retail_price', 'sale_revenue', 'cost_of_electricity_per_station_per_year']","[np.float64(1.0), np.float64(0.0002684402940369214), np.float64(-0.019582732694448244), np.float64(0.019206614692914188), np.float64(0.007743016509638635)]",False
+13,time_for_tech_maturity_of_power_of_charging_station,['tehnology_maturity_of_power_of_charging_station'],[np.float64(1.0)],False
+14,time,"['time_for_tech_maturity_of_power_of_charging_station', 'reference_mode_of_sweden_total_truck_fleet_size_20172023', 'time_for_emission_reduction', 'stop_investing_switch', 'lookup_for_unsteady_scenario_for_el', 'lookup_for_unsteady_scenario_for_switch_onoff', 'lookup_for_unsteady_scenario_for_all_levers_except_el', 'time_for_truck_sales', 'time_for_utilization', 'time_for_diesel_price', 'time_for_carbon_cost', 'time_for_price_of_electricity', 'addition_of_government_investment_in_charging_stations', 'reference_mode_of_sweden_etruck_fleet_size_20172023', 'lifetime_of_a_station']","[np.float64(1.0), np.float64(1.0), np.float64(1.0), 0.0, 0.0, 0.0, 0.0, np.float64(1.0), np.float64(1.0), np.float64(1.0), np.float64(1.0), np.float64(1.0), np.float64(0.0), np.float64(1.0), 0.0]",False
+15,initial_average_power_of_charging_station,['average_power_of_charging_station'],[0.0],False
+16,maximum_nominal_capacity_of_a_charging_station_per_year_new,"['maximum_available_capacity_of_a_station_per_year', 'utilization_rate_of_a_station', 'utilized_capacity_of_a_station_per_year']","[0.0, 0.0, 0.0]",False
+17,max_possible_utilization_rate_of_a_station_lookup_number_of_etrucks,"['maximum_available_capacity_of_a_station_per_year', 'utilization_rate_of_a_station', 'max_possible_utilization_rate_of_a_stationpercentage']","[np.float64(1.0), np.float64(1.0), np.float64(1.0)]",False
+18,total_hours_in_a_year,['maximum_nominal_capacity_of_a_charging_station_per_year_new'],[0.0],False
+19,initial_purchase_cost_of_etrucks,['purchase_cost_of_etrucks'],[0.0],False
+20,tehnology_maturity_of_power_of_charging_station,['increase_in_average_power_of_charging_station'],[0.0],False
+21,average_power_of_charging_station_gap,['increase_in_average_power_of_charging_station'],[0.0],False
+22,adj_time_of_power_of_charging_station,['increase_in_average_power_of_charging_station'],[0.0],False
+23,maximum_average_power_of_charging_station,['average_power_of_charging_station_gap'],[0.0],False
+24,average_energy_demand_from_each_station_per_year,['utilization_rate_of_a_station'],[np.float64(0.0)],False
+25,utilization_rate_of_a_station,"['utilized_capacity_of_a_station_per_year', 'utilization_rate_of_a_stationpercentage']","[np.float64(1.0), np.float64(1.0)]",False
+26,etruck_share_in_total_fleet,"['share_of_etruck_in_total_fleet_in_percentage', 'max_possible_utilization_rate_of_a_station_lookup_number_of_etrucks', 'stop_investing_switch', 'gov_subsidy_percentage_on_difference_between_etruck_diesel_truck_purchase_costs', 'gov_subsidy_percentage_on_construction_cost_of_charging_stations', 'awareness_of_the_technology']","[np.float64(1.0), np.float64(1.0), 0.0, np.float64(-1.0), np.float64(-1.0), np.float64(1.0)]",False
+27,annual_fuel_consumption_kwh_for_diesel_fleet,['annual_operational_emission_from_diesel_trucks'],[np.float64(0.002265782128437926)],False
+28,carbon_intensity_of_diesel_fuel_by_considering_biofuel,"['annual_operational_emission_from_diesel_trucks', 'annual_emission_without_any_etrucks']","[np.float64(0.9977372084148082), np.float64(1.0014599431166737)]",False
+29,factor_for_correction_emission,['annual_operational_emission_from_diesel_trucks'],[0.0],False
+30,sweden_road_lenght,['goal_of_charging_stations_for_full_adoption_of_electric_trucks'],[0.0],False
+31,ideal_density_of_charging_stations_based_on_eu_regulations,['goal_of_charging_stations_for_full_adoption_of_electric_trucks'],[0.0],False
+32,swich_for_new_regulation_effect,['biofuel_share'],[0.0],False
+33,carbon_intensity_of_biofuel,"['biofuel_share', 'carbon_intensity_of_diesel_fuel_by_considering_biofuel']","[0.0, 0.0]",False
+34,emission_reduction_based_on_previous_regulation,['biofuel_share'],[np.float64(0.0)],False
+35,carbon_intensity_of_diesel,"['biofuel_share', 'carbon_intensity_of_diesel_fuel_by_considering_biofuel']","[0.0, 0.0]",False
+36,emission_reduction_based_on_new_regulation,['biofuel_share'],[np.float64(1.0)],False
+37,time_for_emission_reduction,"['emission_reduction_based_on_new_regulation', 'emission_reduction_based_on_previous_regulation']","[np.float64(1.0), np.float64(1.0)]",False
+38,total_annual_amount_of_energy,"['annual_emission_without_any_etrucks', 'emission_per_kwh_annually']","[np.float64(0.0014618726019773438), np.float64(-0.001454320243887869)]",False
+39,annual_fuel_consumption_kwh_per_diesel_truck,"['annual_fuel_consumption_kwh_for_diesel_fleet', 'total_annual_amount_of_energy']","[0.0, 0.0]",False
+40,diesel_truck_fleet_size,"['annual_fuel_consumption_kwh_for_diesel_fleet', 'annual_gov_fund_on_diesel_price', 'total_annual_amount_of_energy', 'share_of_diesel_truck_in_total_fleet_size', 'annual_income_of_diesel_inflow']","[np.float64(1.0), 0.0, np.float64(1.5556891825508796), np.float64(0.3726880300181261), np.float64(0.002471368921946708)]",False
+41,biofuel_share,['carbon_intensity_of_diesel_fuel_by_considering_biofuel'],[np.float64(-1.0)],False
+42,kwh_to_litre_converter,"['carbon_intensity_of_diesel_fuel_by_considering_biofuel', 'annual_fuel_consumption_kwh_per_diesel_truck', 'diesel_retail_price_sekkwh']","[0.0, 0.0, 0.0]",False
+43,total_truck_sales,"['etruck_sales', 'diesel_truck_sale', 'etruck_share_in_new_sales', 'total_truck_fleet_size']","[np.float64(0.9108947248476295), np.float64(1.0017096907703207), np.float64(-10.222680119555923), np.float64(1033.3410922038206)]",False
+44,effect_of_utilitytocost,['etruck_sales'],[np.float64(0.08898597427141967)],False
+45,availability_of_charging_station,"['perceived_etruck_utility_function_attractiveness', 'availability_of_charging_stationpercentage']","[np.float64(0.0), np.float64(1.0)]",False
+46,weight_of_availability,['perceived_etruck_utility_function_attractiveness'],[0.0],False
+47,awareness_of_the_technology,"['perceived_etruck_utility_function_attractiveness', 'awareness_of_the_technologypercentage']","[np.float64(0.0), np.float64(1.0)]",False
+48,weight_of_awareness,['perceived_etruck_utility_function_attractiveness'],[0.0],False
+49,weight_of_maturity,['perceived_etruck_utility_function_attractiveness'],[0.0],False
+50,effect_of_technology_maturity,"['perceived_etruck_utility_function_attractiveness', 'effect_of_technology_maturitypercentage']","[np.float64(0.9523630309063029), np.float64(1.0)]",False
+51,purchase_cost_gap,['decrease_in_purchase_cost_of_etruck'],[0.0],False
+52,learning_effect_delay,['decrease_in_purchase_cost_of_etruck'],[0.0],False
+53,gov_subsidy_percentage_on_difference_between_etruck_diesel_truck_purchase_costs,"['annual_gov_subsidy_on_vehicle_purchase_cost', 'purchase_cost_paid_by_freight_companies']","[np.float64(0.0054943676992982235), np.float64(-1.0)]",False
+54,purchase_cost_of_diesel_truck,"['annual_gov_subsidy_on_vehicle_purchase_cost', 'purchase_cost_gap', 'diesel_truck_total_cost', 'purchase_cost_paid_by_freight_companies', 'annual_rd_investment_from_diesel_truck_earnings']","[0.0, 0.0, 0.0, 0.0, 0.0]",False
+55,purchase_cost_of_etrucks,"['annual_gov_subsidy_on_vehicle_purchase_cost', 'purchase_cost_gap', 'annual_rd_investment_from_etruck_earnings', 'purchase_cost_paid_by_freight_companies']","[0.0, 0.0, 0.0, 0.0]",True
+56,etruck_sales,"['annual_gov_subsidy_on_vehicle_purchase_cost', 'annual_rd_investment_from_etruck_earnings', 'diesel_truck_sale', 'etruck_share_in_new_sales', 'etruck_fleet_size']","[np.float64(1.0055024544046443), np.float64(1.4335156049892654), np.float64(-0.0017096907703206688), np.float64(11.237726037026823), np.float64(1.007800117703077)]",False
+57,cost_of_electricity_per_km,['annual_operation_cost_opex_of_each_etruck'],[np.float64(1.0)],False
+58,maintenance_cost_per_km_for_etruck,['annual_operation_cost_opex_of_each_etruck'],[0.0],False
+59,average_mileage_per_vehicle_per_year,"['annual_operation_cost_opex_of_each_etruck', 'annual_operation_cost_opex_of_each_diesel_truck', 'annual_fuel_consumption_litr_per_diesel_truck', 'charging_consumption_per_etruck_per_year']","[0.0, 0.0, 0.0, 0.0]",False
+60,cost_of_diesel_fuel_per_km,['annual_operation_cost_opex_of_each_diesel_truck'],[np.float64(1.0)],False
+61,maintenance_cost_per_km_for_diesel_truck,['annual_operation_cost_opex_of_each_diesel_truck'],[0.0],False
+62,rd_percentage_of_annual_earning_of_etrucks,['annual_rd_investment_from_etruck_earnings'],[np.float64(0.4328784869425026)],False
+63,average_consumption_per_km_for_diesel_truck,"['annual_fuel_consumption_litr_per_diesel_truck', 'cost_of_diesel_fuel_per_km']","[0.0, 0.0]",False
+64,annual_operation_cost_opex_of_each_diesel_truck,['diesel_truck_discounted_total_opex'],[np.float64(1.0)],False
+65,discount_factor_for_diesel_truck,['diesel_truck_discounted_total_opex'],[0.0],False
+66,diesel_truck_discounted_total_opex,['diesel_truck_total_cost'],[np.float64(1.0)],False
+67,diesel_retail_price,"['cost_of_diesel_fuel_per_km', 'diesel_retail_price_sekkwh', 'annual_income_of_diesel_inflow']","[np.float64(1.0), np.float64(1.0), np.float64(1.0024743736641475)]",False
+68,average_consumption_per_km_for_etruck,"['cost_of_electricity_per_km', 'charging_consumption_per_etruck_per_year']","[0.0, 0.0]",False
+69,charge_retail_price,"['cost_of_electricity_per_km', 'sale_revenue']","[np.float64(1.0), np.float64(0.9807460636767967)]",False
+70,rd_fund_of_etrucks,['rd_spending'],[np.float64(1.0)],True
+71,time_to_spend_rd_funds,['rd_spending'],[0.0],False
+72,total_annual_rd_investment_corporates,"['annual_gov_funding_for_improving_etruck_technology', 'rd_investment']","[np.float64(1.9840333487144177), np.float64(0.6648831017821625)]",False
+73,factor_of_gov_investment_on_the_tech_maturity,['annual_gov_funding_for_improving_etruck_technology'],[0.0],False
+74,annual_gov_funding_for_improving_etruck_technology,"['rd_investment', 'annual_gov_funding_by_five_levers', 'annual_gov_tech_maturity_fund', 'annual_total_gov_funds']","[np.float64(0.3351168982178376), np.float64(-0.32238281152983944), np.float64(1.0), np.float64(0.32238281152983944)]",False
+75,rd_spending,"['technology_development_of_etruck', 'rd_fund_of_etrucks']","[np.float64(1.0), np.float64(0.16887606144209502)]",False
+76,technology_improvement_per_sek_spent,['technology_development_of_etruck'],[0.0],False
+77,revenue_per_station_per_year,['charging_station_profitability_index'],[np.float64(6.04526813670579)],False
+78,operation_cost_per_station_per_year,"['charging_station_profitability_index', 'charge_retail_price', 'total_operational_cost_per_station_accumulated_over_lifetime_years']","[np.float64(-5.025815658678282), np.float64(1.017221799605597), np.float64(1.0)]",False
+79,discount_factor_for_stations,"['charging_station_profitability_index', 'total_operational_cost_per_station_accumulated_over_lifetime_years', 'construction_cost_paid_by_infra_providers_per_station_per_year_discounted']","[0.0, 0.0, 0.0]",False
+80,construction_cost_per_station_paid_by_infra_providers,"['charging_station_profitability_index', 'construction_cost_paid_by_infra_providers_per_station_per_year_discounted']","[np.float64(-0.019433348392747553), np.float64(1.0)]",False
+81,diesel_truck_sale,['annual_rd_investment_from_diesel_truck_earnings'],[np.float64(1.4970149497926193)],False
+82,rd_percentage_of_annual_earning_of_diesel_trucks,['annual_rd_investment_from_diesel_truck_earnings'],[np.float64(0.4963496098148072)],False
+83,stop_investing_switch,['annual_rd_investment_from_diesel_truck_earnings'],[0.0],False
+84,charging_station_profitability_index,['sensitivity_of_private_investors_to_profitability_index'],[np.float64(1.0)],False
+85,total_gov_funds,"['gov_total_fund_per_vehicle', 'monetarized_saving_emissions_per_investment_unit_in_electrification']","[np.float64(1.6677247034569993), np.float64(0.0)]",True
+86,etruck_fleet_size,"['gov_total_fund_per_vehicle', 'annual_gov_fund_on_el_price', 'total_consumption_of_electric_fleet', 'demand_of_charging_station', 'annual_income_of_electricity_inflow', 'diesel_truck_fleet_size', 'average_energy_demand_from_each_station_per_year', 'annual_operational_emission_from_etrucks', 'power_supply_per_etruck_per_year', 'ratio_etruck_to_charging_station', 'total_annual_amount_of_energy', 'etruck_fleet_size_in_target', 'etruck_share_in_total_fleet']","[np.float64(1.57829434056318e-07), 0.0, np.float64(1.0), np.float64(1.0001205206106873), np.float64(0.9847921595867909), np.float64(-2.6832431429121484), np.float64(1.614029353098426), 0.0, np.float64(-1.3683434148347517), np.float64(1.6140293530984267), np.float64(2.55568918255088), np.float64(1.0), np.float64(1.000012601018621)]",True
+87,annual_gov_subsidy_on_charging,"['annual_gov_funding_by_five_levers', 'annual_total_gov_funds', 'gov_charging_subsidy_stock']","[np.float64(-0.5861908588904248), np.float64(0.5861908588904248), 1]",False
+88,annual_gov_subsidy_on_vehicle_purchase_cost,"['annual_gov_funding_by_five_levers', 'annual_total_gov_funds', 'gov_vehicle_subsidy_stock']","[np.float64(-0.0914263295797358), np.float64(0.0914263295797358), 1]",False
+89,annual_gov_fund_on_el_price,"['annual_gov_funding_by_five_levers', 'gov_fund_on_el_price_stock']","[0.0, 0]",False
+90,annual_gov_fund_on_diesel_price,"['annual_gov_funding_by_five_levers', 'gov_fund_on_diesel_price']","[0.0, 0]",False
+91,charging_station_capacity_to_demand_ratio,"['charging_station_capacity_to_demand_ratiopercentage', 'availability_of_charging_station']","[np.float64(1.0), np.float64(1.0)]",False
+92,time_for_price_of_electricity,"['annual_gov_fund_on_el_price', 'price_of_electricity']","[0.0, np.float64(1.0)]",False
+93,charging_consumption_per_etruck_per_year,"['annual_gov_fund_on_el_price', 'total_consumption_of_electric_fleet', 'demand_of_charging_station', 'annual_income_of_electricity_inflow', 'average_energy_demand_from_each_station_per_year', 'annual_operational_emission_from_etrucks', 'total_annual_amount_of_energy']","[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]",False
+94,sensitivity_coefficient_for_price_of_electricity,"['annual_gov_fund_on_el_price', 'price_of_electricity']","[0.0, 0.0]",False
+95,annual_fuel_consumption_litr_per_diesel_truck,"['annual_gov_fund_on_diesel_price', 'annual_fuel_consumption_kwh_per_diesel_truck', 'annual_income_of_diesel_inflow']","[0.0, 0.0, 0.0]",False
+96,utilization_in_total,['utilization_in_totalpercentage'],[np.float64(1.0)],False
+97,sensitivity_coefficient_for_vehicle_subsidy,['gov_subsidy_percentage_on_difference_between_etruck_diesel_truck_purchase_costs'],[0.0],False
+98,sensitivity_coefficient_for_charging_subsidy,['gov_subsidy_percentage_on_construction_cost_of_charging_stations'],[0.0],False
+99,maximum_available_capacity_of_a_station_per_year,"['total_capacity_of_all_installed_station', 'demand_of_charging_station']","[np.float64(0.0002684402940369214), np.float64(-7.226647864347986e-05)]",False
+100,installed_charging_stations,"['total_capacity_of_all_installed_station', 'market_gap_for_charging_stations', 'average_energy_demand_from_each_station_per_year', 'gap_of_number_of_charging_stations_based_on_regulation', 'ratio_etruck_to_charging_station', 'total_power_supply_by_all_charging_station_per_year', 'charging_station_capacity_to_demand_ratio']","[np.float64(0.9996833243406289), np.float64(-0.15620782061041422), np.float64(-0.36818382249403), np.float64(-1.0), np.float64(-0.3681838224940304), np.float64(0.9996833243406289), np.float64(0.6141009767941039)]",True
+101,total_consumption_of_electric_fleet,['utilization_in_total'],[np.float64(1.6142955092295375)],False
+102,total_capacity_of_all_installed_station,['utilization_in_total'],[np.float64(-0.36834341483475186)],False
+103,demand_of_charging_station,"['market_gap_for_charging_stations', 'charging_station_capacity_to_demand_ratio']","[np.float64(1.1607235477824793), np.float64(-1.3682445366201672)]",False
+104,future_demand_of_charging_station,['market_gap_for_charging_stations'],[np.float64(0.004515727172065206)],False
+105,onoff_switch_for_considering_future_charging_demand,['market_gap_for_charging_stations'],[0.0],False
+106,price_of_electricity,"['annual_income_of_electricity_inflow', 'charge_retail_price', 'cost_of_electricity_per_station_per_year']","[np.float64(0.009118913919929571), np.float64(0.0), np.float64(0.9922091087607519)]",False
+107,total_truck_fleet_size,"['diesel_truck_fleet_size', 'share_of_diesel_truck_in_total_fleet_size', 'etruck_share_in_total_fleet']","[np.float64(1.6832431429121486), np.float64(-0.6273138502372257), np.float64(-7.5558133820423815e-06)]",True
+108,carbon_intensity_of_electricity_fuel,['annual_operational_emission_from_etrucks'],[0.0],False
+109,r_common_ratio_in_geometric_series,"['discount_factor_for_etruck', 'discount_factor_for_diesel_truck', 'discount_factor_for_stations']","[0.0, 0.0, 0.0]",False
+110,etruck_lifetime,['discount_factor_for_etruck'],[0.0],False
+111,time_unit,"['discount_factor_for_etruck', 'discount_factor_for_diesel_truck', 'discount_factor_for_stations']","[0.0, 0.0, 0.0]",False
+112,total_power_supply_by_all_charging_station_per_year,['power_supply_per_etruck_per_year'],[np.float64(0.6142955092295374)],False
+113,goal_of_charging_stations_for_full_adoption_of_electric_trucks,['gap_of_number_of_charging_stations_based_on_regulation'],[0.0],False
+114,awareness_coefficient,['awareness_of_the_technology'],[0.0],False
+115,actual_private_investment_in_charging_stations,"['building_charging_station', 'actual_government_investment_in_charging_stations', 'potential_private_investment_in_charging_stations']","[np.float64(0.30010062740490295), np.float64(1.0004390803501195), np.float64(0.9607611626793009)]",False
+116,actual_government_investment_in_charging_stations,"['building_charging_station', 'annual_gov_subsidy_on_charging', 'potential_government_investment_in_charging_stations']","[np.float64(0.6998993725950989), np.float64(1.0), 0.0006396405428579302]",False
+117,technology_maturity_of_etruck,['ratio_of_technology_maturity_to_goal'],[np.float64(1.0)],True
+118,goal_of_technology_maturity_fund,['ratio_of_technology_maturity_to_goal'],[0.0],False
+119,u2p_ratio,['effect_of_utilitytocost'],[np.float64(1.0)],False
+120,initial_total_truck_fleet_size,['total_truck_fleet_size'],[0.0],False
+121,charging_stations_under_construction,['finishing_charging_station'],[np.float64(1.0)],True
+122,time_to_build_a_charging_station,['finishing_charging_station'],[0.0],False
+123,initial_charging_stations_under_construction,['charging_stations_under_construction'],[0.0],False
+124,initial_charging_stations,['installed_charging_stations'],[0.0],False
+125,time_for_truck_sales,['total_truck_sales'],[np.float64(1.0)],False
+126,initial_etruck_fleet_size,['etruck_fleet_size'],[0.0],False
+127,annual_rd_investment_from_etruck_earnings,['total_annual_rd_investment_corporates'],[np.float64(0.012885234069955488)],False
+128,annual_rd_investment_from_diesel_truck_earnings,['total_annual_rd_investment_corporates'],[np.float64(0.9871147659300445)],False
+129,time_for_carbon_cost,['carbon_society_cost'],[np.float64(1.0)],False
+130,saving_emission_by_transit_to_electrification,['saving_emission_converted_to_money_due_to_electrification'],[np.float64(0.9997000899730083)],False
+131,carbon_society_cost,"['saving_emission_converted_to_money_due_to_electrification', 'annual_carbon_cost']","[np.float64(0.0), np.float64(0.2931798586386494)]",False
+132,cumulative_emission_without_any_etrucks,['saving_emission_by_transit_to_electrification'],[np.float64(2.5772896097266815)],True
+133,cumulative_emission_with_having_etrucks,['saving_emission_by_transit_to_electrification'],[np.float64(-1.5772896097266818)],True
+134,construction_cost_paid_by_infra_providers_per_station_per_year_discounted,['charge_retail_price'],[np.float64(0.0024101286134397106)],False
+135,margin_of_charging_providers_for_electricity_price,['charge_retail_price'],[0.0],False
+136,saving_emission_converted_to_money_due_to_electrification,['monetarized_saving_emissions_per_investment_unit_in_electrification'],[np.float64(-4230672.861810658)],False
+137,mistrust_effect,['awareness_coefficient'],[0.0],False
+138,goal_of_emission_level_in_2030,['addition_of_government_investment_in_charging_stations'],[0.0],False
+139,total_annual_emission_from_trucks_tank_to_wheel,"['addition_of_government_investment_in_charging_stations', 'emission_reduction_factor_compared_to_2010_level', 'annual_carbon_cost', 'annual_emission_with_having_etrucks', 'emission_per_kwh_annually']","[np.float64(0.0), np.float64(1.0), np.float64(1.2927920210323414), np.float64(1.0), np.float64(0.9985476036265042)]",False
+140,potential_government_investment_in_charging_stations,"['addition_of_government_investment_in_charging_stations', 'actual_government_investment_in_charging_stations']","[np.float64(-0.9992668409636991), np.float64(0.0)]",True
+141,gap_of_number_of_charging_stations_based_on_regulation,['addition_of_government_investment_in_charging_stations'],[np.float64(0.0002184341351515009)],False
+142,goal_of_emission_level_in_2045,['addition_of_government_investment_in_charging_stations'],[0.0],False
+143,time_to_close_gap_for_gov,['addition_of_government_investment_in_charging_stations'],[0.0],False
+144,gov_portion_of_investment_per_station,"['addition_of_government_investment_in_charging_stations', 'ratio_of_gov_to_private_investment']","[np.float64(0.0005147266578940528), np.float64(0.30001406085018273)]",False
+145,emission_level_in_2010,"['emission_reduction_factor_compared_to_2010_level', 'goal_of_emission_level_in_2045', 'goal_of_emission_level_in_2030']","[0.0, 0.0, 0.0]",False
+146,emission_reduction_goal_in_2045,['goal_of_emission_level_in_2045'],[0.0],False
+147,emission_reduction_goal_in_2030,['goal_of_emission_level_in_2030'],[0.0],False
+148,diesel_truck_lifetime,['discount_factor_for_diesel_truck'],[0.0],False
+149,ratio_of_gov_to_private_investment,['actual_government_investment_in_charging_stations'],[np.float64(0.00041226166210351343)],False
+150,annual_operational_emission_from_etrucks,['total_annual_emission_from_trucks_tank_to_wheel'],[0.0],False
+151,annual_operational_emission_from_diesel_trucks,['total_annual_emission_from_trucks_tank_to_wheel'],[np.float64(1.0)],False
+152,initial_utility_function,['utility_function_of_etruck'],[0.0],False
+153,initial_potential_private_fund,['potential_private_investment_in_charging_stations'],[0.0],False
+154,initial_potential_public_fund,['potential_government_investment_in_charging_stations'],[0.0],False
+155,annual_operation_cost_opex_of_each_etruck,['etruck_discounted_total_opex'],[np.float64(1.0)],False
+156,discount_factor_for_etruck,['etruck_discounted_total_opex'],[0.0],False
+157,lifetime_of_a_station,['discount_factor_for_stations'],[0.0],False
+158,purchase_cost_paid_by_freight_companies,['electric_truck_total_cost'],[np.float64(0.004238768581250862)],False
+159,etruck_discounted_total_opex,['electric_truck_total_cost'],[np.float64(0.9957612314187492)],False
+160,discount_rate,['r_common_ratio_in_geometric_series'],[0.0],False
+161,utilitytocost_of_etruck,['u2p_ratio'],[np.float64(4.210504536082022)],False
+162,utilitytocost_of_diesel_truck,['u2p_ratio'],[np.float64(-5.213379477113853)],False
+163,based_utility_for_diesel_truck,['utilitytocost_of_diesel_truck'],[0.0],False
+164,diesel_truck_total_cost,['utilitytocost_of_diesel_truck'],[np.float64(-1.0)],False
+165,utility_function_of_etruck,"['utilitytocost_of_etruck', 'change_in_utility']","[0.0, 0.0]",True
+166,electric_truck_total_cost,['utilitytocost_of_etruck'],[np.float64(-1.0)],False
+167,potential_private_investment_in_charging_stations,"['deciding_not_to_invest_reluctance_to_invest', 'actual_private_investment_in_charging_stations']","[0.0, np.float64(1.0)]",True
+168,reluctance_to_invest_rate,['deciding_not_to_invest_reluctance_to_invest'],[0.0],False
+169,market_gap_for_charging_stations,['addition_of_private_investment_in_charging_stations'],[np.float64(0.8065685239783253)],False
+170,private_portion_of_investment_per_station,"['addition_of_private_investment_in_charging_stations', 'ratio_of_gov_to_private_investment']","[np.float64(0.0014297145056549813), np.float64(-0.6999915687987713)]",False
+171,sensitivity_of_private_investors_to_profitability_index,['addition_of_private_investment_in_charging_stations'],[np.float64(0.18997194416759913)],False
+172,time_to_close_gap_for_private_sector,['addition_of_private_investment_in_charging_stations'],[0.0],False
+173,sale_revenue,['revenue_per_station_per_year'],[np.float64(1.0)],False
+174,ancillary_revenue,['revenue_per_station_per_year'],[0.0],False
+175,perceived_etruck_utility_function_attractiveness,['change_in_utility'],[np.float64(1.0)],False
+176,time_to_perceived_utility,['change_in_utility'],[0.0],False
+177,time_to_investment_for_private_sector,['actual_private_investment_in_charging_stations'],[0.0],False
+178,increase_in_average_power_of_charging_station,['average_power_of_charging_station'],[0],False
+179,decrease_in_purchase_cost_of_etruck,['purchase_cost_of_etrucks'],[0],False
+180,rd_investment,['rd_fund_of_etrucks'],[np.float64(1.168876061442095)],False
+181,annual_gov_funding_by_five_levers,['governmnet_fund_balance_by_five_levers'],[1],False
+182,annual_gov_subsidy_on_charging_2,['gov_charging_subsidy_stock_2'],[1],False
+183,annual_gov_tech_maturity_fund,['gov_tech_maturity_fund_stock'],[1],False
+184,total_truck_decommission,['total_truck_fleet_size'],[np.float64(1032.3410922038206)],False
+185,technology_development_of_etruck,['technology_maturity_of_etruck'],[1],False
+186,finishing_charging_station,"['charging_stations_under_construction', 'installed_charging_stations']","[0.5542532290208024, 1.0434782608695652]",False
+187,decaying_charging_station,['installed_charging_stations'],[0.043478260869565216],False
+188,etruck_decommission,['etruck_fleet_size'],[np.float64(0.007800117703077128)],False
+189,annual_emission_without_any_etrucks,['cumulative_emission_without_any_etrucks'],[1],False
+190,annual_total_gov_funds,['total_gov_funds'],[1],False
+191,annual_emission_with_having_etrucks,['cumulative_emission_with_having_etrucks'],[1],False
+192,annual_income_of_diesel_inflow,['income_of_diesel_stock'],[1],False
+193,annual_income_of_electricity_inflow,['income_of_electricity_stock'],[1],False
+194,change_in_utility,['utility_function_of_etruck'],[0],False
+195,addition_of_private_investment_in_charging_stations,['potential_private_investment_in_charging_stations'],[np.float64(1.960761162679301)],False
+196,deciding_not_to_invest_reluctance_to_invest,['potential_private_investment_in_charging_stations'],[np.float64(0.0)],False
+197,addition_of_government_investment_in_charging_stations,['potential_government_investment_in_charging_stations'],[1.000639640542858],False
