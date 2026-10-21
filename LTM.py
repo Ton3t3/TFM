@@ -336,6 +336,7 @@ class PathScore:
 
     def strongest_path_algorithm(self, origin, target):
         self.origin = origin
+        self.paths = set()
         for i in range(len(target)):        
             #reset state for every target
             for v in self.var_list: 
@@ -367,7 +368,7 @@ class PathScore:
         #REMEMBER: path_score_list = [(path, path_score), (path2, path_score2), ...]
         #Compute relative path scores
         total_path_score = sum(abs(path_score[1]) for path_score in path_score_list)
-        relative_path_score_dict = {path_score[0] : (path_score[1], path_score[1]/total_path_score) for path_score in path_score_list}
+        relative_path_score_dict = {path_score[0] : (path_score[1], path_score[1]/total_path_score if total_path_score != 0 else None) for path_score in path_score_list}
         return relative_path_score_dict
 
 

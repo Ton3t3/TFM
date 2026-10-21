@@ -118,7 +118,7 @@ if __name__ == "__main__":
     #TESTING THE OUTPUTS
     output_path = "C:/Users/tonoz/Desktop/KTH/TFM/Repo_TFM/outputs"
 
-    #HARD CODED
+    #HARD CODED DICTS AND LISTS
     stocks_flows = {
         #STOCK: [INFLOW, OUTFLOW]
         'average_power_of_charging_station': ['increase_in_average_power_of_charging_station', None],
@@ -146,7 +146,7 @@ if __name__ == "__main__":
         'potential_government_investment_in_charging_stations': ['addition_of_government_investment_in_charging_stations', ['actual_government_investment_in_charging_stations']]
     }
 
-    input_output_list = {
+    input_output_dict = {
         #BASED ON THE INPUT-OUTPUT VARIABLES USED IN THE SENSITIVITY ANALYSIS
         "average_power_of_charging_station": ["construction_cost_per_station",
                                               "operational_maintenance_cost_of_a_station_based_on_percentage_of_capex",
@@ -198,21 +198,26 @@ if __name__ == "__main__":
     
     ps_class = LTM.PathScore()
     var_list, stock_list = ps_class.df_to_VariableSPA(df, stocks_flows)
-    # stocks_print = [stock.name for stock in stock_list]
-    # print(f"STOCK_LIST: {stocks_print}\n \
-    #       Number of stocks registered = {len(stocks_print)}/{len(stocks_flows.keys())}\n")
-    ps_class.var_list = var_list      
-
+    ps_class.var_list = var_list    
+      
+    #Create the lists of VariableSPA variables that we are going to analyze
+    #INPUTS
+    inputs = list(set(levers_inputs_keys) | input_output_dict.keys())
+    inputs_list = ps_class.list_to_VariableSPA(inputs)
+    #OUTPUTS
+    outputs = list(set().union(*input_output_dict.values()))
+    outputs_list = ps_class.list_to_VariableSPA(outputs)
+    
+    #Start the path search
     #STOCKS - STOCKS
     ps_class.path_search(stock_list, stock_list, model_class, os.path.join(output_path, "stock_stock"))
-
     # INPUTS - STOCKS
-    inputs_list = ps_class.list_to_VariableSPA(levers_inputs_keys)
     ps_class.path_search(inputs_list, stock_list, model_class, os.path.join(output_path, "input_stock"))
-    
-
-    # print(stocks_flows.values())
-    
+    # INPUTS - OUTPUTS
+    ps_class.path_search(inputs_list, outputs_list, model_class, os.path.join(output_path, "input_output"))
+    # STOCKS - OUTPUTS
+    ps_class.path_search(stock_list, outputs_list, model_class, os.path.join(output_path, "stock_output"))
+  
 
     # print("Time:", model_class.t)
     # print("-·-·-·-·-·-·-·-·-·-")
