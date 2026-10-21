@@ -192,31 +192,32 @@ if __name__ == "__main__":
 
     levers_inputs_keys = ["sensitivity_coefficient_for_charging_subsidy", "sensitivity_coefficient_for_vehicle_subsidy", "factor_of_gov_investment_on_the_tech_maturity", "sensitivity_coefficient_for_price_of_electricity", "sensitivity_coefficient_for_diesel"]
 
-    df, df2 = LTM.link_score(model, model_class, stocks_flows)
+    #Get df of the link scores of the model
+    ls_class = LTM.LinkScore()
+    df = ls_class.link_score(model, model_class, stocks_flows)
     
-    spa_var = LTM.PathScore()
-
-    var_list, stock_list,  = spa_var.df_to_VariableSPA(df2, stocks_flows)
-    stocks_print = [stock.name for stock in stock_list]
-    print(f"STOCK_LIST: {stocks_print}\n \
-          Number of stocks registered = {len(stocks_print)}/{len(stocks_flows.keys())}\n")
-    spa_var.var_list = var_list
+    ps_class = LTM.PathScore()
+    var_list, stock_list = ps_class.df_to_VariableSPA(df, stocks_flows)
+    # stocks_print = [stock.name for stock in stock_list]
+    # print(f"STOCK_LIST: {stocks_print}\n \
+    #       Number of stocks registered = {len(stocks_print)}/{len(stocks_flows.keys())}\n")
+    ps_class.var_list = var_list
 
     #Look for loops with same stocks
     for stock_var in stock_list:
-        path_set = spa_var.strongest_path_algorithm(stock_var, stock_list)
+        path_set = ps_class.strongest_path_algorithm(stock_var, stock_list)
 
-        path_score = spa_var.path_score(path_set)
+        path_score = ps_class.path_score(path_set)
 
         df3 = pd.DataFrame(path_score, columns=["path_score", "Relative_path_score", "path_set"])
         df3.to_csv(os.path.join(output_path,f'path_score_t-{model_class.t}-{stock_var.name}.csv'))
 
     # INPUTS - STOCKS
-    inputs_list = spa_var.string_to_VariableSPA(levers_inputs_keys)
+    inputs_list = ps_class.string_to_VariableSPA(levers_inputs_keys)
     for input in inputs_list:
-        path_set = spa_var.strongest_path_algorithm(input, stock_list)
+        path_set = ps_class.strongest_path_algorithm(input, stock_list)
         
-        path_score = spa_var.path_score(path_set)
+        path_score = ps_class.path_score(path_set)
 
         df4 = pd.DataFrame(path_score, columns=["path_score", "Relative_path_score", "path_set"])
         df4.to_csv(os.path.join(output_path,"input_stock",f'path_score_t-{model_class.t}-{input.name}.csv'))

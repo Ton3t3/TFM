@@ -8,7 +8,6 @@
 
 import numpy as np
 import pandas as pd
-from itertools import islice
 
 def snapshot(model, names):
     """**Takes a snapshot of the model's current state for all the variables of the model**"""
@@ -16,41 +15,16 @@ def snapshot(model, names):
     res["time"] = model.components.time()
     return res
 
-def eval_z(model, z, inputs, originals, cur_z=None):
-    # replace inputs by constants
-    model.set_components(inputs)  
-    model.clean_caches()      
-    # recompute z with the corresponding past and current values                  
-    val = model[z]
-    # print(f"Inputs: {inputs}\nz12: {val}")
-    # restore the original equations
-    for key, function in originals.items():       
-        setattr(model.components, key, function)
-    model.clean_caches()
-    val_restored = model[z]
-    if abs(cur_z - val_restored) != 0:
-        print(f"WARNING: Restored {z} value {val_restored} does not match current value {cur_z}")
-    return val
-
-def link_score(model, model_class, stocks_flows):
-    deps = model.dependencies
-    #Filtered 
+def filter_dependencies(model):
     stateful_vars = []
-    discarted_vars = {}
     filtered_deps = {}
-
-    for key, val in deps.items():
+    for key, val in model.dependencies.items():
         if (key not in ["saveper", "time_step", "final_time", "initial_time", "OUTPUTS"]) and (key[0] != "_"):
             if (getattr(model.components, key).type == "Stateful"):
                 val_dict = dict()
-                # Get all the variables that the stocks depended on, some of them
-                # will require to look further than others
                 for i_key, i_val in val.items():
-                    # In case one of the dependencies is a stock, we want to get the dependencies 
-                    # under the "initial" and "step" dicts 
                     if "_" in i_key[0]:
                         #References a _integ / _delayfixed / _smooth
-                        print(f"Cheching {key}...\n")
                         stateful_var_dependencies = model.dependencies[i_key]
                         val_dict.update(stateful_var_dependencies["initial"] | stateful_var_dependencies["step"])
                     else:
@@ -60,182 +34,191 @@ def link_score(model, model_class, stocks_flows):
             else:
                 filtered_deps[key] = val
     dynamic_vars = [key for key, val in filtered_deps.items() if (len(val) != 0) and (key not in [var for var in stateful_vars if (getattr(model.components, var).subtype != "Integ")])] #Not including _smooth and _delayfixed
-    static_vars = [key for key in filtered_deps.keys() if (key not in dynamic_vars) and (key not in stateful_vars)]
-    # print (f"Stateful variables: {stateful_vars}")
-    # print (f"Discarded variables: {[vars for vars in deps.keys() if (deps.keys() not in filtered_deps.keys())]}")
+    return filtered_deps, dynamic_vars
 
-    categories = ["z", "dz", "inputs", "dx", "dz_x", "ls"]
-    rows = []
-    n_steps = 1
-    links_to_score = dynamic_vars
-    names = list(filtered_deps.keys())
-    
-    prev = snapshot(model, names)
-    for _ in range(n_steps):
-        model.step(1)
-        cur = snapshot(model, names)
-        for z in links_to_score:             # aux/flow variables, not stocks or stateful vars
-            dx_total = []
-            dz_x_total = []
-            ls_total = []
-            not_flow_x_counter = 0
-            for x in filtered_deps[z]:
-                # IN CASE THE CURRENT Z IS A STOCK
-                is_stateful_bool = (getattr(model.components, z).type == "Stateful")
-                if is_stateful_bool:
-                    #ONLY INCLUDE THE LINKS THAT ARE NOT FLOWS
-                    if (x in stocks_flows[z]) or (stocks_flows[z][1] is not None and x in stocks_flows[z][1]):
-                        continue
-                    else:
-                        not_flow_x_counter += 1                                         
-                        inputs = {d: prev[d] for d in filtered_deps[z] if (d != x) and not((d in stocks_flows[z]) or (stocks_flows[z][1] is not None and d in stocks_flows[z][1]))}
-                        inputs[x] = cur[x]
-                        originals = {d: getattr(model.components, d) for d in inputs}
-                        z_x = eval_z(model, z, inputs, originals, cur_z=cur[z])
-                        dz_x, dz, dx = z_x - prev[z], cur[z] - prev[z], cur[x] - prev[x]
-                        dx_total.append(dx)
-                        dz_x_total.append(dz_x)
-                        ls = 0.0 if (dz == 0 or dx == 0) else abs(dz_x/dz) * np.sign(dz_x/dx)
-                        ls_total.append(ls)
-                else:
-                    inputs = {d: prev[d] for d in filtered_deps[z] if d != x}
-                    inputs[x] = cur[x]
-                    originals = {d: getattr(model.components, d) for d in inputs}
-                    z_x = eval_z(model, z, inputs, originals, cur_z=cur[z])
-                    dz_x, dz, dx = z_x - prev[z], cur[z] - prev[z], cur[x] - prev[x]
-                    dx_total.append(dx)
-                    dz_x_total.append(dz_x)
-                    ls = 0.0 if (dz == 0 or dx == 0) else abs(dz_x/dz) * np.sign(dz_x/dx)
-                    ls_total.append(ls)
-                # print(f"dz_x: {dz_x}, dz: {dz}, dx: {dx}")
-                # print(f"Link score for {z} with respect to its dependencies: {ls}")
-                # print("··" * 50)
-            if (not is_stateful_bool) or ((is_stateful_bool) and (not_flow_x_counter != 0)):
-                rows.append([z, dz, inputs, dx_total, dz_x_total, ls_total])
-            # print("\n")
-        for z in static_vars:            
-            #Since all these variables are static, their link score is 0.0
-            rows.append([z, 0.0, {}, 0.0, 0.0, 0.0])
-        
-        df = pd.DataFrame(rows, columns=categories)
-        df.set_index("z")
-        df.to_csv(f'link_score_t-{model_class.t}-previous.csv')
-        #CHANGE FORMAT FOR STRONGEST PATH ALGORITHM
-        rows2 = []
-        visited_current_x = []
-        visited_z = set()
-        categories2 = ["x", "z", "ls", "stock_bool"]
-        for _, row in df.iterrows():
-            for x_var in row["inputs"]:
-                future_z_list = []
-                future_ls_list = []
-                if x_var not in visited_current_x:
-                    current_x = x_var
-                    for _, row2 in df.iterrows():
-                        counter = 0
-                        for x_var2 in row2["inputs"]:
-                            if current_x == x_var2:
-                                future_z_list.append(row2["z"])
-                                visited_z.add(row2["z"])
-                                future_ls_list.append(row2["ls"][counter])
-                            counter += 1
-                    visited_current_x.append(current_x)
-                    #MARK IF THE CURRENT_X IS A STOCK OR NOT
-                    if current_x in stocks_flows.keys():
-                        rows2.append([current_x, future_z_list, future_ls_list, True]) 
-                    else:
-                        rows2.append([current_x, future_z_list, future_ls_list, False]) 
-        
-        #CHECK HOW MANY VARIABLES ARE NOT INCLUDED
-        print((set(static_vars) | set(dynamic_vars)) - (set(visited_current_x)|(set(visited_z))))
-        #Stock pipe related links [ ls(i->s) and ls(o->s)]
-        for s in stocks_flows.keys():
-            exists_inflow_bool = True
-            exists_outflow_bool = True
-            #Inflow
-            inflow = stocks_flows[s][0]
-            if inflow == None:
-                inflow_value = 0
-                exists_inflow_bool = False
-            else: 
-                inflow_value = prev[inflow]
-            #Outflows
-            outflow = stocks_flows[s][1]
-            if outflow == None:
-                outflow_value_list = [0]
-                exists_outflow_bool = False
+class LinkScore():
+    def __init__(self):
+        self.ls_dict = dict()
+        self.model = None
+        self.cur = None
+        self.prev = None
+        self.z = None
+        self.x = None
+        self.s = None
+
+    def eval_z(self, inputs, originals, cur_z=None):
+        # replace inputs by constants
+        self.model.set_components(inputs)  
+        self.model.clean_caches()      
+        # recompute z with the corresponding past and current values                  
+        val = self.model[self.z]
+        # restore the original equations
+        for key, function in originals.items():       
+            setattr(self.model.components, key, function)
+        self.model.clean_caches()
+        val_restored = self.model[self.z]
+        if abs(cur_z - val_restored) != 0:
+            print(f"WARNING: Restored {self.z} value {val_restored} does not match current value {cur_z}")
+        return val
+
+    def is_a_flow_bool(self, stocks_flows):
+        check_if_inflow = self.x in stocks_flows[self.z]
+        check_if_outflow = stocks_flows[self.z][1] is not None and self.x in stocks_flows[self.z][1]
+        return  check_if_inflow or check_if_outflow
+
+    def dz_x_calc(self, filtered_deps):
+        inputs = {d: self.prev[d] for d in filtered_deps[self.z] if d != self.x}
+        inputs[self.x] = self.cur[self.x]
+        originals = {d: getattr(self.model.components, d) for d in inputs}
+        z_x = self.eval_z(inputs, originals, cur_z=self.cur[self.z])
+        dz_x = z_x - self.prev[self.z]
+        return dz_x
+
+    def link_score_calc(self, dz_x):
+        dz,dx = self.cur[self.z] - self.prev[self.z], self.cur[self.x] - self.prev[self.x]
+        ls = 0.0 if (dz == 0 or dx == 0) else abs(dz_x/dz) * np.sign(dz_x/dx)
+        return ls
+
+    def variable_dict_storage(self, filtered_deps, is_stateful_bool, stocks_flows):
+        if is_stateful_bool:
+            #ONLY INCLUDE THE LINKS THAT ARE NOT FLOWS
+            if self.is_a_flow_bool(stocks_flows):
+                ls = None
             else:
-                #There exist one of the stocks that has two outflows
-                outflow_value_list = [prev[o] for o in outflow]
-                total_outflow_value = sum(outflow_value_list)
-            #CALCULATE LINK SCORES
-            ls_is = 0
-            ls_os_list = dict()
-            #CASE I -> S -> NONE
-            if exists_outflow_bool == False:
+                #IS AN INITIAL VARIABLE -> LS = 0
+                ls = 0
+        else:
+            dz_x = self.dz_x_calc(filtered_deps)
+            ls = self.link_score_calc(dz_x)
+        #STORE THE LINK SCORES IN THE DICTIONARY
+        if ls is not None:
+            if self.x not in self.ls_dict:
+                self.ls_dict[self.x] = [(self.z, ls)]
+            else:
+                self.ls_dict[self.x].append((self.z, ls))
+
+    def get_flows(self, stocks_flows):
+        exists_inflow = True
+        exists_outflow = True
+        #Inflow
+        inflow = stocks_flows[self.s][0]
+        if inflow == None:
+            inflow_value = 0
+            exists_inflow = False
+        else: 
+            inflow_value = self.prev[inflow]
+        #Outflows
+        outflow = stocks_flows[self.s][1]
+        if outflow == None:
+            outflow_value_list = [0]
+            exists_outflow = False
+        else:
+            #There exist one of the stocks that has two outflows
+            outflow_value_list = [self.prev[o] for o in outflow]
+        total_outflow_value = sum(outflow_value_list)
+
+        #Case_bool: 1 -> Inflow, None  2 -> None, Outflow   3 -> Inflow, Outflow
+        case_bool = int(exists_inflow) + 2*int(exists_outflow)
+
+        return inflow, inflow_value, outflow, outflow_value_list, total_outflow_value, case_bool
+
+
+    def stocks_dict_storage(self, stocks_flows):
+        #1. IDENTIFY THE FLOWS
+        inflow, inflow_value, outflow, outflow_value_list, total_outflow_value, case_bool = self.get_flows(stocks_flows)
+        #2. CALCULATE LINK SCORES
+        ls_is = 0
+        ls_os_list = dict()
+        match case_bool:
+            case 1: #CASE I -> S -> NONE
                 if inflow_value == 0:
                     ls_is = 0
                 else:
                     ls_is = 1
-            #CASE NONE -> S -> O
-            elif exists_inflow_bool == False:
+            case 2: #CASE NONE -> S -> O
                 for i in range(len(outflow_value_list)):
                     if outflow_value_list[i] == 0:
                         ls_os_list[outflow[i]] = 0
                     else:
                         ls_os_list[outflow[i]] = 1
-            # CASE I -> S -> O
-            else:
+            case _: # CASE I -> S -> O
                 ls_is = abs(inflow_value/(inflow_value-total_outflow_value))
                 for i in range(len(outflow_value_list)):
                     ls_os_list[outflow[i]] = abs(outflow_value_list[i]/(inflow_value-total_outflow_value))
-            
-            #STORE THE LINK SCORES
-            #Store inflows (i -> s)
-            if exists_inflow_bool:
-                i_in_list = False
+        #3. STORE THE LINK SCORES
+        #Store inflows (i -> s)
+        if case_bool != 2:
+            #CASE A: THE VARIABLE IS ALREADY DEFINED IN THE DICT => ADD THE LINK TO THE EXISTING ROW
+            if (inflow in self.ls_dict.keys()):
+                self.ls_dict[inflow].append((self.s, ls_is))
+            #CASE B: THE VARIABLE IS NOT DEFINED IN ROWS2 => ADD THE LINK TO THE DATAFRAME        
+            else:
+                self.ls_dict[inflow] = [(self.s, ls_is)]
+        #Store outflows (o -> s)
+        if case_bool != 1:
+            for i in range(len(outflow_value_list)):
                 #CASE A: THE VARIABLE IS ALREADY DEFINED IN ROWS2 => ADD THE LINK TO THE EXISTING ROW
-                for sublist in rows2:
-                    if (sublist and sublist[0] == inflow) and (exists_inflow_bool):
-                        i_in_list = True
-                        sublist[1].append(s)
-                        sublist[2].append(ls_is)
-                #CASE B: THE VARIABLE IS NOT DEFINED IN ROWS2 => ADD THE LINK TO THE DATAFRAME        
-                if (i_in_list == False) and (exists_inflow_bool):
-                    rows2.append([inflow, [s], [ls_is], False])
-            #Store outflows (o -> s)
-            if exists_outflow_bool:
-                o_in_list_array = {var:False for var in outflow}
-                #CASE A: THE VARIABLE IS ALREADY DEFINED IN ROWS2 => ADD THE LINK TO THE EXISTING ROW
-                for sublist in rows2:
-                    if (sublist and sublist[0] in ls_os_list.keys()) and (exists_outflow_bool):
-                            o_in_list_array[sublist[0]] = True
-                            sublist[1].append(s)
-                            sublist[2].append(ls_os_list[sublist[0]])
+                if (outflow[i] in self.ls_dict.keys()):   
+                    self.ls_dict[outflow[i]].append((self.s, ls_os_list[outflow[i]]))                  
                 #CASE B: THE VARIABLE IS NOT DEFINED IN ROWS2 => ADD THE LINK TO THE DATAFRAME  
-                for i in range(len(o_in_list_array)):    
-                    key = next(islice(o_in_list_array, i, None))  
-                    if (o_in_list_array[key] == False) and (exists_outflow_bool):
-                        rows2.append([key, [s], [ls_os_list[key]], False])
+                else:
+                    self.ls_dict[outflow[i]] = [(self.s, ls_os_list[outflow[i]])]
 
-        #DELAY and SMOOTH variables
-        for v in set(stateful_vars) - set(stocks_flows.keys()):
-            """The link score of a pathway which passes through a macro is the composite
-            link score of the pathway with the strongest absolute magnitude of its pathway score
-            across all pathways through the macro."""
-            print(v)
+    def dict_to_df(self, model_class):
+        rows = [
+            {
+                "x": x,
+                "z": [z for z, _ in targets],
+                "ls": [ls for _, ls in targets]
+            }
+            for x, targets in self.ls_dict.items()
+        ]
+        df = pd.DataFrame(rows)
+        df.to_csv(f"link_score_t-{model_class.t}-next2.csv", index=False)
+        return df
 
-        prev = cur
-        print(f"Step completed. Current time: {model_class.t}\n")
-        df2 = pd.DataFrame(rows2, columns=categories2)
-        df2.set_index("x")
-        df2.to_csv(f'link_score_t-{model_class.t}-next.csv')
+    def link_score(self, model, model_class, stocks_flows):
+        #Filtered dependencies dict
+        filtered_deps, z_with_links = filter_dependencies(model)
 
-        # df_list.append(df)
-        # df_list_next.append(df2)
-        # df.to_csv(f'link_score_t-{model_class.t}.csv')
-    # return df_list, df_list_next
-    return df, df2
+        n_steps = 1
+        #List of variables in the model
+        names = list(filtered_deps.keys())
+        prev = snapshot(model, names)
+        for _ in range(n_steps):
+            model.step(1)
+            cur = snapshot(model, names)
+            #Initialize the class
+            self.model = model
+            self.cur = cur
+            self.prev = prev
+            # Aux/flow variables, not stocks or stateful vars
+            for z in z_with_links:             
+                self.z = z
+                for x in filtered_deps[z]:
+                    self.x = x
+                    # IN CASE THE CURRENT Z IS A STOCK
+                    is_stateful_bool = (getattr(model.components, z).type == "Stateful")
+                    self.variable_dict_storage(filtered_deps, is_stateful_bool, stocks_flows)
+
+            #Stock pipe related links [ ls(i->s) and ls(o->s)]
+            for s in stocks_flows.keys():
+                self.s = s
+                self.stocks_dict_storage(stocks_flows)
+
+            #DELAY and SMOOTH variables
+            # for v in set(stateful_vars) - set(stocks_flows.keys()):
+            #     """The link score of a pathway which passes through a macro is the composite
+            #     link score of the pathway with the strongest absolute magnitude of its pathway score
+            #     across all pathways through the macro."""
+            #     print(v)
+
+            prev = cur
+            print(f"Step completed. Current time: {model_class.t}\n")
+
+            #Store the dict as a dataframe
+            df = self.dict_to_df(model_class)
+        return df
 
 
 class Link:
