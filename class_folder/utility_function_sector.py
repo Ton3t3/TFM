@@ -48,57 +48,57 @@ class utility_function_sector:
     @property
     def TIME_TO_PERCEIVED_UTILITY(self):
         """The time it takes for users to recognize the benefits of adopting e-trucks. Base on expert estimation [Year]"""
-        return self.model.time_to_perceived_utility()
+        return self.model.time_to_perceived_utility
 
     @property
     def TIME_TO_SPEND_RD_FUNDS(self):
         """The duration over which research and development funds are spent. Based on interviews [Year]"""
-        return self.model.time_to_spend_rd_funds()
+        return self.model.time_to_spend_rd_funds
 
     @property
     def TECHNOLOGY_IMPROVEMENT_PER_SEK_SPENT(self):
         """Based on interviews: 10 times the annual R&D budget - considering that the technology will be mature in 10 years. We summed the R&D investment from 2017 until 10 years. Maximum value for this variable, if we want to introduce "more" delay, then we decrease this further. [technology/SEK]"""
-        return self.model.time_to_spend_rd_funds()
+        return self.model.time_to_spend_rd_funds
 
     @property   
     def FACTOR_OF_GOV_INVESTMENT_ON_THE_TECH_MATURITY(self):
         """magnitude of the impact of government investment on improving e-truck technology maturity.Base scenario value [Dmnl]"""
-        return self.model.factor_of_gov_investment_on_the_tech_maturity()
+        return self.model.factor_of_gov_investment_on_the_tech_maturity
 
     @property
     def GOAL_OF_TECHNOLOGY_MATURITY_FUND(self):
         """maximum level of technology maturity [technology]"""
-        return self.model.goal_of_technology_maturity_fund()
+        return self.model.goal_of_technology_maturity_fund
 
     @property
     def MISTRUST_EFFECT(self):
         """The percentage of awareness lost due to mistrust between freight companies. Based on the expert interview, we should consider a percentage of awareness that is ruined during the adoption. [Dmnl]"""
-        return self.model.mistrust_effect()
+        return self.model.mistrust_effect
 
     @property
     def BASED_UTILITY_FOR_DIESEL_TRUCK(self):
         """"The level of utility (attractiveness) of an d-truck. Based on the expert interview [Dmnl]"""
-        return self.model.based_utility_for_diesel_truck()
+        return self.model.based_utility_for_diesel_truck
 
     @property           
     def WEIGHT_OF_AVAILABILITY(self):
         """"this variable represents the weight of the availability of infrastructure influence on the e-truck utility, in comparison with the other influences. Based on the expert interview [Dmnl]"""
-        return self.model.weight_of_availability()
+        return self.model.weight_of_availability
 
     @property
     def WEIGHT_OF_AWARENESS(self):
         """"this variable represents the weight of the awareness influence on the e-truck utility, in comparison with the other influences. Based on the expert interview [Dmnl]"""
-        return self.model.weight_of_awareness()
+        return self.model.weight_of_awareness
 
     @property
     def WEIGHT_OF_MATURITY(self):
         """"this variable represents the weight of the vehicle technology maturity influence on the e-truck utility, in comparison with the other influences. Based on the expert interview [Dmnl]"""
-        return self.model.weight_of_maturity()
+        return self.model.weight_of_maturity
 
     @property
     def INITIAL_UTILITY_FUNCTION(self):
         """initial value for utility function of e-trucks. Base on expert estimation [Dmnl]""" 
-        return self.model.initial_utility_function()
+        return self.model.initial_utility_function
      
     # (Green box) (still "constants")
     def RD_PERCENTAGE_OF_ANNUAL_EARNING_OF_DIESEL_TRUCKS(self): 
@@ -211,18 +211,30 @@ class utility_function_sector:
         return self.model.rd_spending()
     
     ## STOCKS
+    def der_utility_Function_of_Etruck(self): 
+            """The level of utility (attractiveness) of an e-truck (NET FLOW) [dDmnl/dt]"""
+            return self.model._integ_utility_function_of_etruck.ddt()
     def utility_Function_of_Etruck(self): 
         """The level of utility (attractiveness) of an e-truck [Dmnl]"""
         return self.model._integ_utility_function_of_etruck()
-    
+
+    def der_technology_Maturity_of_Etruck(self):
+        """"The level of advancement and development of electric truck technology, indicating how close it is to reaching its full potential and goals. (NET FLOW) [dtechnology/dt]"""
+        return self.model._integ_technology_maturity_of_etruck.ddt()
     def technology_Maturity_of_Etruck(self): 
         """"The level of advancement and development of electric truck technology, indicating how close it is to reaching its full potential and goals. [technology]"""
         return self.model._integ_technology_maturity_of_etruck()
-    
+
+    def der_rD_Fund_of_Etrucks(self): 
+            """Total funds available for electric trucks research and development. (NET FLOW) [dSEK/dt]"""
+            return self.model._integ_rd_fund_of_etrucks.ddt()
     def rD_Fund_of_Etrucks(self): 
         """Total funds available for electric trucks research and development. [SEK]"""
         return self.model._integ_rd_fund_of_etrucks()
-    
+
+    def der_gov_Tech_Maturity_Fund_Stock(self): 
+            """The accumulation of public funds contributes to the technological maturity of electric trucks. (NET FLOW) [dSEK/dt]"""
+            return self.model._integ_gov_tech_maturity_fund_stock.ddt()
     def gov_Tech_Maturity_Fund_Stock(self): 
         """The accumulation of public funds contributes to the technological maturity of electric trucks. [SEK]"""
         return self.model._integ_gov_tech_maturity_fund_stock()

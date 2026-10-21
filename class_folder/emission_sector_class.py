@@ -38,32 +38,32 @@ class emission_sector:
     @property
     def SWICH_FOR_NEW_REGULATION_EFFECT(self):
         """[Dmnl]"""
-        return self.model.swich_for_new_regulation_effect()
+        return self.model.swich_for_new_regulation_effect
 
     @property
     def Carbon_intensity_of_biofuel(self):
         """[kgCO2eq/Litre]"""
-        return self.model.carbon_intensity_of_biofuel()
+        return self.model.carbon_intensity_of_biofuel
 
     @property
     def Carbon_intensity_of_diesel(self):
         """[kgCO2eq/Litre]"""
-        return self.model.carbon_intensity_of_diesel()
+        return self.model.carbon_intensity_of_diesel
 
     @property
     def Carbon_intensity_of_electricity__fuel(self):
         """driving carbon intensity equal to zero [kgCO2eq/kWh]"""
-        return self.model.carbon_intensity_of_electricity_fuel()
+        return self.model.carbon_intensity_of_electricity_fuel
 
     @property
     def factor_for_correction_emission(self):
         """Based on discussion with SCB (Statistikmyndigheten) experts"""
-        return self.model.factor_for_correction_emission()
+        return self.model.factor_for_correction_emission
 
     @property
     def Kwh_to_Litre_converter(self):
         """"Energy content in kWh per liter of diesel fuel Energy content in MJ per liter: 36 MJ Conversion factor: 1 MJ = 0.277778 kWh [kWh/Litre]"""
-        return self.model.kwh_to_litre_converter()
+        return self.model.kwh_to_litre_converter
 
     ##
     def time_for_carbon_cost(self):
@@ -165,18 +165,30 @@ class emission_sector:
         return self.model.annual_total_gov_funds()
     
     ## STOCKS
+    def der_government_Fund_Balance_by_Five_Levers(self): 
+            """(NET FLOW) [dSEK/dt]"""
+            return self.model._integ_governmnet_fund_balance_by_five_levers.ddt()
     def government_Fund_Balance_by_Five_Levers(self): 
         """[SEK]"""
-        return self.model._integ_governmnet_fund_balance_by_five_levers
-    
+        return self.model._integ_governmnet_fund_balance_by_five_levers()
+
+    def der_cumulative_Emission_without_any_etrucks(self): 
+            """small initial value near to zero (NET FLOW) [d(kgCO2eq)/dt]"""
+            return self.model._integ_cumulative_emission_without_any_etrucks.ddt()
     def cumulative_Emission_without_any_etrucks(self): 
         """small initial value near to zero [kgCO2eq]"""
         return self.model._integ_cumulative_emission_without_any_etrucks()
-    
+
+    def der_cumulative_Emission_with_having_etrucks(self): 
+            """small initial value near to zero (NET FLOW) [d(kgCO2eq)/dt]"""
+            return self.model._integ_cumulative_emission_with_having_etrucks.ddt()
     def cumulative_Emission_with_having_etrucks(self): 
         """small initial value near to zero [kgCO2eq]"""
         return self.model._integ_cumulative_emission_with_having_etrucks()
-    
+
+    def der_total_Gov_Funds(self): 
+            """small initial value near to zero (NET FLOW) [dSEK/dt]"""
+            return self.model._integ_total_gov_funds.ddt()
     def total_Gov_Funds(self): 
         """small initial value near to zero [SEK]"""
         return self.model._integ_total_gov_funds()

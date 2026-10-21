@@ -30,12 +30,12 @@ class vehicle_fleet_sector:
     @property
     def INITIAL_ETRUCK_FLEET_SIZE(self): 
         """The starting number of electric trucks in the fleet [Vehicle]"""
-        return self.model.initial_etruck_fleet_size()
+        return self.model.initial_etruck_fleet_size
 
     @property
     def INITIAL_TOTAL_TRUCK_FLEET_SIZE(self):
         """The starting number of total trucks in the fleet [Vehicle]"""
-        return self.model.initial_total_truck_fleet_size()
+        return self.model.initial_total_truck_fleet_size
 
 
     def time_for_truck_sales(self):
@@ -63,17 +63,23 @@ class vehicle_fleet_sector:
     # Outflows
     def Total_Truck_Decommission(self):
         """Number of total trucks that are removed from use in each year [Vehicle/Year]"""
-        return self.model._delayfixed_total_truck_decommission()
+        return self.model.total_truck_decommission()
                 
     def Etruck_Decommission(self): 
         """Number of electric trucks that are removed from use in each year [Vehicle/Year]"""
-        return self.model._delayfixed_etruck_decommission() 
+        return self.model.etruck_decommission() 
 
     ## STOCKS 
+    def der_etruck_Fleet_Size(self): 
+            """The total number of electric trucks in the fleet (NET FLOW) [dVehicle/dt]"""
+            return self.model._integ_etruck_fleet_size.ddt()
     def etruck_Fleet_Size(self): 
         """The total number of electric trucks in the fleet [Vehicle]"""
         return self.model._integ_etruck_fleet_size()
-    
+
+    def der_total_Truck_Fleet_Size(self): 
+            """The total number of trucks in the fleet (NET FLOW) [dVehicle/dt]"""
+            return self.model._integ_total_truck_fleet_size.ddt()
     def total_Truck_Fleet_Size(self): 
         """The total number of trucks in the fleet [Vehicle]"""
         return self.model._integ_total_truck_fleet_size()

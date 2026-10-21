@@ -8,6 +8,7 @@
 
 import numpy as np
 import pandas as pd
+import os
 
 def snapshot(model, names):
     """**Takes a snapshot of the model's current state for all the variables of the model**"""
@@ -240,6 +241,8 @@ class PathScore:
         self.target = None
         self.paths = set() #Only stores unique paths 
         self.var_list = None
+        #For the path_score algorithm
+        self.path = None
 
     def add_path_if_unique(self, is_a_loop):
         names = [v.name for v in self.stack]
@@ -285,7 +288,7 @@ class PathScore:
             score += 1e-16
         return abs(score)
 
-    def string_to_VariableSPA(self, string_list):
+    def list_to_VariableSPA(self, string_list):
         variableSPA_list = []
         for var_name in string_list:
             for varSPA in self.var_list:
@@ -328,14 +331,10 @@ class PathScore:
             next_links_list.sort(reverse=True, key=self.sorting_ls)
             # Fill the var_variable links with the outgoing links
             var_variable.links = next_links_list
-            # # Create a sepparate list of variables that are stocks
-            # if row["stock_bool"] == True:
-            #     stock_list.append(var_variable)
         return var_list, stock_list
 
 
     def strongest_path_algorithm(self, origin, target):
-        self.paths = set()
         self.origin = origin
         for i in range(len(target)):        
             #reset state for every target
@@ -345,34 +344,66 @@ class PathScore:
             self.stack = []
             self.target = target[i]
             self.check_outbound_uses(origin, 1.0)
-        return self.paths
+        relative_path_score_dict, reduced_relative_path_score_dict = self.path_score()
+        return relative_path_score_dict, reduced_relative_path_score_dict
 
-    def path_score(self, path_set):
-        path_score_list = []
-        relative_path_score_list = []
-        path_variables_list = [] #To not repeat another for path
-        for path in path_set:
-            final_link_score = 1
-            #EACH PATH STORES A SET OF STRINGS IN ORDER
-            empty_link_score_bool = False
-            for i in range(len(path)):
-                var = path[i]
-                var_variable = next((v for v in self.var_list if v.name == var), None)
-                for link in var_variable.links:
-                    if link.variable.name == path[(i+1)%len(path)]:
-                        var_link_score = link.score
-                        final_link_score = final_link_score * var_link_score
-                        #Do not include links with link score == 0
-                        if final_link_score == 0:
-                            empty_link_score_bool = True
-                            break
-            if not empty_link_score_bool:
-                path_score_list.append(final_link_score)
-                path_variables_list.append(path)
+    def path_score_calc(self):
+        final_path_score = 1
+        #Iterate for each variable of the path IN ORDER
+        for i in range(len(self.path)):
+            var = self.path[i]
+            VariableSPA_var = next((v for v in self.var_list if v.name == var), None)
+            for link in VariableSPA_var.links:
+                next_var = self.path[(i+1)%len(self.path)]
+                if link.variable.name == next_var:
+                    var_link_score = link.score
+                    final_path_score = final_path_score * var_link_score
+                    #If the path score is already 0, it is no use to continue
+                    if final_path_score == 0:
+                        break
+        return (self.path, final_path_score)
+
+    def relative_path_score_calc(self, path_score_list):
+        #REMEMBER: path_score_list = [(path, path_score), (path2, path_score2), ...]
         #Compute relative path scores
-        total_path_score = sum(abs(x) for x in path_score_list)
-        for i in range(len(path_score_list)):
-            path_s = path_score_list[i]
-            path_vars = path_variables_list[i]
-            relative_path_score_list.append([path_s, path_s/total_path_score, path_vars])
-        return relative_path_score_list
+        total_path_score = sum(abs(path_score[1]) for path_score in path_score_list)
+        relative_path_score_dict = {path_score[0] : (path_score[1], path_score[1]/total_path_score) for path_score in path_score_list}
+        return relative_path_score_dict
+
+
+    def dict_to_df(self, relative_path_score_dict, model_class, output_path, origin_name, extra_string = ""):
+            rows = [
+                {
+                    "path_score": path_values[0],
+                    "relative_path_score": path_values[1],
+                    "path_set": path
+                }
+                for path, path_values in relative_path_score_dict.items()
+            ]
+            df = pd.DataFrame(rows)
+            df.to_csv(os.path.join(output_path,f'path_score_t-{model_class.t}-{origin_name}'+extra_string+'.csv'))
+            return df
+
+    def path_score(self):
+        path_score_list = []
+        reduced_path_score_list = []
+        for path in self.paths:
+            self.path = path
+            final_path_score_tuple = self.path_score_calc()
+            #Store the path_score result in a list
+            path_score_list.append(final_path_score_tuple)
+            if final_path_score_tuple[1] != 0:
+                reduced_path_score_list.append(final_path_score_tuple)
+        #Calculate the relative path score
+        relative_path_score_dict = self.relative_path_score_calc(path_score_list)
+        reduced_relative_path_score_dict = self.relative_path_score_calc(reduced_path_score_list)
+        return relative_path_score_dict, reduced_relative_path_score_dict
+
+    def path_search(self, inputs, outputs, model_class, output_path):
+        for input in inputs:
+            relative_path_score_dict, reduced_relative_path_score_dict = self.strongest_path_algorithm(input, outputs)
+            #To store all the paths
+            self.dict_to_df(relative_path_score_dict, model_class, output_path, input.name)
+            #To store only the active paths  
+            self.dict_to_df(reduced_relative_path_score_dict, model_class, output_path, input.name, "_reduced")
+          

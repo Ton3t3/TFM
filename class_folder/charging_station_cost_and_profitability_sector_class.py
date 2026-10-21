@@ -4,7 +4,7 @@ class charging_station_cost_and_profitability_sector:
     # charging_station_cost_and_profitability sector static variables
     DEFAULT = {
         "time_unit" : 1, 
-        "construction_cost_per_station" : 1.7997E+06, # 1.80E+06, 
+        # "construction_cost_per_station" : 1.7997E+06, # 1.80E+06, 
         "lifetime_of_a_station" : 8, 
         "sensitivity_coefficient_for_charging_subsidy" : 1, 
         "sensitivity_coefficient_for_price_of_electricity" : 1, 
@@ -32,7 +32,7 @@ class charging_station_cost_and_profitability_sector:
 
     ALIASES = {
         "time_unit": "time_unit",
-        "CONSTRUCTION_COST_PER_STATION": "construction_cost_per_station",
+        # "CONSTRUCTION_COST_PER_STATION": "construction_cost_per_station",
         "LIFETIME_OF_A_STATION": "lifetime_of_a_station",
         "sensitivity_coefficient_for_CHARGING_SUBSIDY": "sensitivity_coefficient_for_charging_subsidy",
         "sensitivity_coefficient_for_EL": "sensitivity_coefficient_for_price_of_electricity",
@@ -60,88 +60,88 @@ class charging_station_cost_and_profitability_sector:
     @property
     def time_unit(self):
         """Formulation of the unit for IRR is complicated. Thus we used this vriable to fix unit left and hand right problem. It doesn't change the model [Year]"""
-        return self.model.time_unit()
+        return self.model.time_unit
 
     @property
     def CONSTRUCTION_COST_PER_STATION(self):
         """Construction cost per kW [SEK/Charging stations]"""
-        return self.model.construction_cost_per_station()
+        return self.model.construction_cost_per_station
 
     @property
     def LIFETIME_OF_A_STATION(self):
         """"Based on interviews, EU report page 204, and REEL project report European Commission. (2021). Impact Assessment: Proposal for a Regulation of the European Parliament and of the Council on the deployment of alternative fuels infrastructure, and repealing Directive 2014/94/EU of the European Parliament and of the Council. REEL. (2022). Regional Electrified Logistics. [Year]"""
-        return self.model.lifetime_of_a_station()
+        return self.model.lifetime_of_a_station
 
     @property
     def sensitivity_coefficient_for_CHARGING_SUBSIDY(self):
         """[Dmnl]"""
-        return self.model.sensitivity_coefficient_for_charging_subsidy()
+        return self.model.sensitivity_coefficient_for_charging_subsidy
 
     @property
     def sensitivity_coefficient_for_EL(self):
         """using only for sensitivity analysis [Dmnl]"""
-        return self.model.sensitivity_coefficient_for_price_of_electricity()
+        return self.model.sensitivity_coefficient_for_price_of_electricity
 
     @property
     def Ancillary_revenue(self):
         """[SEK/(Charging stations*Year)]"""
-        return self.model.ancillary_revenue()
+        return self.model.ancillary_revenue
 
     @property
     def AVERAGE_CONSUMPTION_PER_KM_FOR_ETRUCK(self):
         """[kWh/KM]"""
-        return self.model.average_consumption_per_km_for_etruck()
+        return self.model.average_consumption_per_km_for_etruck
 
     @property
     def AVERAGE_MILEAGE_PER_VEHICLE_PER_YEAR(self):
         """[KM/(Vehicle*Year)]"""
-        return self.model.average_mileage_per_vehicle_per_year()
+        return self.model.average_mileage_per_vehicle_per_year
 
     @property
     def MARGIN_OF_CHARGING_PROVIDERS_FOR_ELECTRICITY_PRICE(self):
         """Based on interviews [Dmnl]"""
-        return self.model.margin_of_charging_providers_for_electricity_price()
+        return self.model.margin_of_charging_providers_for_electricity_price
 
     @property
     def DISCOUNT_RATE(self):
         """[Dmnl]"""
-        return self.model.discount_rate()
+        return self.model.discount_rate
 
     @property
     def MAX_NOMINAL_CAPACITY_OF_A_STATION_PER_YEAR(self):
         """Charger Power (kw/station)* 8760 hour/year [kWh/(Year*Charging stations)]"""
-        return self.model.max_nominal_capacity_of_a_station_per_year()
+        return self.model.max_nominal_capacity_of_a_station_per_year
 
     ## From "Average Power of Charging Station" stock
     @property
     def CONSTRUCTION_COST_PER_KW(self):
         """[SEK/Kw]"""
-        return self.model.construction_cost_per_kw()
+        return self.model.construction_cost_per_kw
 
     @property
     def ADJ_TIME_OF_POWER_OF_CHARGING_STATION(self):
         """[Year]"""
-        return self.model.adj_time_of_power_of_charging_station() 
+        return self.model.adj_time_of_power_of_charging_station
 
     @property
     def MAXIMUM_AVERAGE_POWER_OF_CHARGING_STATION(self):    
         """[Kw/Charging stations]"""
-        return self.model.maximum_average_power_of_charging_station()
+        return self.model.maximum_average_power_of_charging_station
 
     @property
     def TOTAL_HOURS_IN_A_YEAR(self):
         """Total number of hours in a year = 24*365 = 8760 [kWh/kw/Year]"""
-        return self.model.total_hours_in_a_year()
+        return self.model.total_hours_in_a_year
 
     @property
     def OPERATION_AND_MAINTENTANCE_COST_PER_kWh_UTILIZED_CAPACITY(self):
         """The annual cost of operating and maintaining a charging station. [SEK/kWh]"""
-        return self.model.operation_and_maintenance_cost_per_kwh_utilized_capacity()
+        return self.model.operation_and_maintenance_cost_per_kwh_utilized_capacity
 
     @property
     def INITIAL_AVERAGE_POWER_OF_CHARGING_STATION(self): 
         """[kw/Charging stations]"""
-        return self.model.initial_average_power_of_charging_station()
+        return self.model.initial_average_power_of_charging_station
 
     ## from Average Power of Charging Station (Not implemented in Excel file)
     def time_for_tech_maturity_of_power_of_charging_station(self):
@@ -301,18 +301,30 @@ class charging_station_cost_and_profitability_sector:
         return self.model.increase_in_average_power_of_charging_station()
 
     ## STOCKS
+    def der_income_of_electricity_stock(self): 
+            """(NET FLOW) [dSEK/dt]"""
+            return self.model._integ_income_of_electricity_stock.ddt()
     def income_of_electricity_stock(self): 
         """[SEK]"""
         return self.model._integ_income_of_electricity_stock()
-    
+
+    def der_gov_fund_on_EL_price_stock(self): 
+            """(NET FLOW) [dSEK/dt]"""
+            return self.model._integ_gov_fund_on_el_price_stock.ddt()
     def gov_fund_on_EL_price_stock(self): 
         """[SEK]"""
         return self.model._integ_gov_fund_on_el_price_stock()
-    
+
+    def der_gov_Charging_subsidy_stock_2(self): 
+            """(NET FLOW) [dSEK/dt]"""
+            return self.model._integ_gov_charging_subsidy_stock_2.ddt()
     def gov_Charging_subsidy_stock_2(self): 
         """[SEK]"""
         return self.model._integ_gov_charging_subsidy_stock_2()
     ## from Average Power of Charging Station (Not implemented in Excel file)
+    def der_average_Power_of_Charging_Station(self):
+            """(NET FLOW) [d(kw/Charging stations)/dt]"""
+            return self.model._integ_average_power_of_charging_station.ddt()
     def average_Power_of_Charging_Station(self):
         """[kw/Charging stations]"""
         return self.model._integ_average_power_of_charging_station()

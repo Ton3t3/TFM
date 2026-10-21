@@ -201,29 +201,17 @@ if __name__ == "__main__":
     # stocks_print = [stock.name for stock in stock_list]
     # print(f"STOCK_LIST: {stocks_print}\n \
     #       Number of stocks registered = {len(stocks_print)}/{len(stocks_flows.keys())}\n")
-    ps_class.var_list = var_list
+    ps_class.var_list = var_list      
 
-    #Look for loops with same stocks
-    for stock_var in stock_list:
-        path_set = ps_class.strongest_path_algorithm(stock_var, stock_list)
-
-        path_score = ps_class.path_score(path_set)
-
-        df3 = pd.DataFrame(path_score, columns=["path_score", "Relative_path_score", "path_set"])
-        df3.to_csv(os.path.join(output_path,f'path_score_t-{model_class.t}-{stock_var.name}.csv'))
+    #STOCKS - STOCKS
+    ps_class.path_search(stock_list, stock_list, model_class, os.path.join(output_path, "stock_stock"))
 
     # INPUTS - STOCKS
-    inputs_list = ps_class.string_to_VariableSPA(levers_inputs_keys)
-    for input in inputs_list:
-        path_set = ps_class.strongest_path_algorithm(input, stock_list)
-        
-        path_score = ps_class.path_score(path_set)
+    inputs_list = ps_class.list_to_VariableSPA(levers_inputs_keys)
+    ps_class.path_search(inputs_list, stock_list, model_class, os.path.join(output_path, "input_stock"))
+    
 
-        df4 = pd.DataFrame(path_score, columns=["path_score", "Relative_path_score", "path_set"])
-        df4.to_csv(os.path.join(output_path,"input_stock",f'path_score_t-{model_class.t}-{input.name}.csv'))
-
-
-    print(stocks_flows.values())
+    # print(stocks_flows.values())
     
 
     # print("Time:", model_class.t)

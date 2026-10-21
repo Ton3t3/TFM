@@ -43,46 +43,46 @@ class vehicle_cost_sector:
     @property
     def MAINTENANCE_COST_PER_KM_FOR_DIESEL_TRUCK(self):
         """[SEK/KM]"""
-        return self.model.maintenance_cost_per_km_for_diesel_truck()
+        return self.model.maintenance_cost_per_km_for_diesel_truck
 
     @property
     def MAINTENANCE_COST_PER_KM_FOR_ETRUCK(self):
         """[SEK/KM]"""
-        return self.model.maintenance_cost_per_km_for_etruck()
+        return self.model.maintenance_cost_per_km_for_etruck
 
     @property
     def DIESEL_TRUCK_LIFETIME(self):
         """[Year]"""
-        return self.model.diesel_truck_lifetime()
+        return self.model.diesel_truck_lifetime
 
     @property
     def sensitivity_coefficient_for_VEHICLE_SUBSIDY(self):
         """Only use for sensitivity analysis [Dmnl]"""
-        return self.model.sensitivity_coefficient_for_vehicle_subsidy()
+        return self.model.sensitivity_coefficient_for_vehicle_subsidy
 
     @property
     def sensitivity_coefficient_for_DIESEL(self):
         """Only use for sensitivity analysis [Dmnl]"""
-        return self.model.sensitivity_coefficient_for_diesel()
+        return self.model.sensitivity_coefficient_for_diesel
 
     @property
     def PURCHASE_COST_OF_DIESEL_TRUCK(self):
         """EV: 5,513,100 SEK/vehicle Diesel: 1,759,500 SEK/vehicle EV: 470,000 EURO/vehicle Diesel: 150,000 EURO/vehicle EUR to SEK: 11.73 (14 May 2024) [SEK/Vehicle]"""
-        return self.model.purchase_cost_of_diesel_truck()
+        return self.model.purchase_cost_of_diesel_truck
 
     @property
     def LEARNING_EFFECT_DELAY(self):
         """Based on expert opinion [Year]"""
-        return self.model.learning_effect_delay()
+        return self.model.learning_effect_delay
 
     @property
     def AVERAGE_CONSUMPTION_PER_KM_FOR_DIESEL_TRUCK(self):
         """100 km, 27 litre ICCT report, table 1 page 9 = 0.27 [Litre/KM]"""
-        return self.model.average_consumption_per_km_for_diesel_truck()
+        return self.model.average_consumption_per_km_for_diesel_truck
 
     @property
     def INITIAL_PURCHASE_COST_OF_ETRUCKS(self):
-        return self.model.initial_purchase_cost_of_etrucks()
+        return self.model.initial_purchase_cost_of_etrucks
 
     ##
     def time_for_diesel_price(self):
@@ -180,18 +180,30 @@ class vehicle_cost_sector:
         return self.model.diesel_truck_fleet_size()
     
     ## STOCKS
+    def der_purchase_Cost_of_Etrucks(self): 
+        """EV: 5,513,100 SEK/vehicle Diesel: 1,759,500 SEK/vehicle EV: 470,000 EURO/vehicle Diesel: 150,000 EURO/vehicle EUR to SEK: 11.73 (14 May 2024) (NET FLOW) [d(SEK/Vehicle)/dt]"""
+        return self.model._integ_purchase_cost_of_etrucks.ddt()
     def purchase_Cost_of_Etrucks(self): 
         """EV: 5,513,100 SEK/vehicle Diesel: 1,759,500 SEK/vehicle EV: 470,000 EURO/vehicle Diesel: 150,000 EURO/vehicle EUR to SEK: 11.73 (14 May 2024) [SEK/Vehicle]"""
         return self.model._integ_purchase_cost_of_etrucks()
-    
+
+    def der_income_of_Diesel__Stock(self): 
+        """(NET FLOW) [dSEK/dt]"""
+        return self.model._integ_income_of_diesel_stock.ddt()
     def income_of_Diesel__Stock(self): 
         """[SEK]"""
         return self.model._integ_income_of_diesel_stock()
-    
+
+    def der_gov_Fund_on_Diesel_Price(self): 
+        """(NET FLOW) [dSEK/dt]"""
+        return self.model._integ_gov_fund_on_diesel_price.ddt()
     def gov_Fund_on_Diesel_Price(self): 
         """[SEK]"""
         return self.model._integ_gov_fund_on_diesel_price()
-    
+
+    def der_gov_vehicle_subsidy_stock(self): 
+        """(NET FLOW) [dSEK/dt]"""
+        return self.model._integ_gov_vehicle_subsidy_stock.ddt()
     def gov_vehicle_subsidy_stock(self): 
         """[SEK]"""
         return self.model._integ_gov_vehicle_subsidy_stock()

@@ -24,17 +24,17 @@ class charging_station_availability_sector:
     @property
     def TIME_TO_BUILD_A_CHARGING_STATION(self):
         """"Based on interviews and REEL project report REEL. (2022). Regional Electrified Logistics. [Year]"""
-        return self.model.time_to_build_a_charging_station()
+        return self.model.time_to_build_a_charging_station
     
     @property
     def INITIAL_CHARGING_STATIONS_UNDER_CONSTRUCTION(self):
         """There is a 3 truck difference between 2017 and 2018, and we calculated the demand for initial charging staions based on 350 KW chargers. [Charging stations]"""
-        return self.model.initial_charging_stations_under_construction()
+        return self.model.initial_charging_stations_under_construction
                 
     @property
     def INITIAL_CHARGING_STATIONS(self):
         """There is 1 truck in the year 2017, and we calculated the demand for initial charging staions based on 350 KW chargers. [Charging stations]"""
-        return self.model.initial_charging_stations()
+        return self.model.initial_charging_stations
 
     ##    
     def availability_of_charging_station(self): 
@@ -64,13 +64,19 @@ class charging_station_availability_sector:
     # Outflows
     def Decaying_Charging_Station(self): 
         """[Charging stations/Year]"""
-        return self.model._delayfixed_decaying_charging_station()        
+        return self.model.decaying_charging_station()        
 
     ## STOCKS
+    def der_installed_Charging_Stations(self): 
+            """(NET FLOW) [d(Charging stations)/dt]"""
+            return self.model._integ_installed_charging_stations.ddt()
     def installed_Charging_Stations(self): 
         """[Charging stations]"""
         return self.model._integ_installed_charging_stations()
 
+    def der_charging_Stations_under_construction(self): 
+            """[d(Charging stations)/dt]"""
+            return self.model._integ_charging_stations_under_construction.ddt()
     def charging_Stations_under_construction(self): 
         """[Charging stations]"""
         return self.model._integ_charging_stations_under_construction()
