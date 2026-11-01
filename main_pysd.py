@@ -6,6 +6,7 @@ import pandas as pd
 import pysd
 import inspect
 import LTM
+import re
 from pysd.py_backend.output import ModelOutput
 # Class imports
 from class_folder.emission_sector_class import emission_sector
@@ -17,7 +18,6 @@ from class_folder.utility_function_sector import utility_function_sector
 from class_folder.vehicle_fleet_sector_class import vehicle_fleet_sector
 
 import warnings
-
 
 class Model:
     SECTORS = [emission_sector, vehicle_fleet_sector, vehicle_cost_sector, utility_function_sector, charging_station_cost_and_profitability_sector, charging_station_availability_sector,investment_on_charging_stations_sector]
@@ -67,6 +67,7 @@ class Model:
         return merged_aliases
 
     def apply_scenario(self, model, overrides=None):
+        """**Set-up of static variables / initial values of stocks for the current simulation**"""
         baseline_defaults,baseline_stock_defaults = self.baseline_scenario()
         aliases = self.collect_aliases()
 
@@ -83,7 +84,12 @@ class Model:
         for stock_attr, value in init_scenario.items():
             stock = getattr(model.components, stock_attr)
             stock.init_func = lambda v=value: v   # v=value avoids late-binding bug in the loop
-    
+
+    def set_path(self, path_name):
+        """**Creates the path folder in case the path does not exist**"""
+        if not os.path.exists(path_name):
+            os.makedirs(path_name)
+        return path_name
 
 if __name__ == "__main__":
 
@@ -108,7 +114,7 @@ if __name__ == "__main__":
     output = ModelOutput()
 
     model_class = Model(model) # Initialization of reader's class tree
-    model_class.apply_scenario(model) # Set-up of static variables / initial values of stocks for the current simulation
+    model_class.apply_scenario(model) 
     # model_class.apply_scenario(model, {"ETRUCK_LIFETIME" : 2}) # Set-up of static variables / initial values of stocks for the current simulation
     # model_class.apply_scenario(model, {"ETRUCK_LIFETIME" : 2, "INITIAL_TECHNOLOGY_MATURITY_OF_ETRUCK" : 10}) # Set-up of static variables / initial values of stocks for the current simulation
 
@@ -116,7 +122,8 @@ if __name__ == "__main__":
     model.set_stepper(output, final_time=2060, step_vars=[model_class.charg_cost_and_profitability.ALIASES["LIFETIME_OF_A_STATION"]]) # Original Vensim simulation from 2017 to 2060
 
     #TESTING THE OUTPUTS
-    output_path = "C:/Users/tonoz/Desktop/KTH/TFM/Repo_TFM/outputs"
+    output_path = "C:/Users/tonoz/Desktop/KTH/TFM/Repo_TFM/outputs" #Path where the output folder is located
+    n_steps = 10 #Number of steps
 
     #HARD CODED DICTS AND LISTS
     stocks_flows = {
@@ -192,49 +199,82 @@ if __name__ == "__main__":
 
     levers_inputs_keys = ["sensitivity_coefficient_for_charging_subsidy", "sensitivity_coefficient_for_vehicle_subsidy", "factor_of_gov_investment_on_the_tech_maturity", "sensitivity_coefficient_for_price_of_electricity", "sensitivity_coefficient_for_diesel"]
 
-    #Get df of the link scores of the model
-    ls_class = LTM.LinkScore()
-    df = ls_class.link_score(model, model_class, stocks_flows)
-    
-    ps_class = LTM.PathScore()
-    var_list, stock_list = ps_class.df_to_VariableSPA(df, stocks_flows)
-    ps_class.var_list = var_list    
-      
-    #Create the lists of VariableSPA variables that we are going to analyze
-    #INPUTS
-    inputs = list(set(levers_inputs_keys) | input_output_dict.keys())
-    inputs_list = ps_class.list_to_VariableSPA(inputs)
-    #OUTPUTS
-    outputs = list(set().union(*input_output_dict.values()))
-    outputs_list = ps_class.list_to_VariableSPA(outputs)
-    
-    #Start the path search
-    #STOCKS - STOCKS
-    ps_class.path_search(stock_list, stock_list, model_class, os.path.join(output_path, "stock_stock"))
-    # INPUTS - STOCKS
-    ps_class.path_search(inputs_list, stock_list, model_class, os.path.join(output_path, "input_stock"))
-    # INPUTS - OUTPUTS
-    ps_class.path_search(inputs_list, outputs_list, model_class, os.path.join(output_path, "input_output"))
-    # STOCKS - OUTPUTS
-    ps_class.path_search(stock_list, outputs_list, model_class, os.path.join(output_path, "stock_output"))
-  
+    #OUTPUTS OF THE SENSITIVITY ANALYSIS
+    levers_outputs_keys = ["etruck_fleet_size", "annual_total_gov_funds"]
 
-    # print("Time:", model_class.t)
-    # print("-·-·-·-·-·-·-·-·-·-")
-    # print("LIFETIME OF A STATION:",model_class.charg_cost_and_profitability.LIFETIME_OF_A_STATION()) #VAR
-    # # print("total operational cost per station (accumulated over lifetime years)",model_class.charg_cost_and_profitability.total_operational_cost_per_station__accumulated_over_lifetime_years())
-    # print("technology Maturity of Etruck [der]: ",model_class.utility_function.der_technology_Maturity_of_Etruck()) #STOCK
-    # print("technology Maturity of Etruck [val]: ",model_class.utility_function.technology_Maturity_of_Etruck()) #STOCK
+    #Filtered dependencies dict
+    filtered_deps, z_with_links = LTM.filter_dependencies(model)   
+    names = list(filtered_deps.keys())
 
-    
-    # for n in range(40):
-    #     if n%10 == 5:
-    #         model.step(1, {model_class.charg_cost_and_profitability.ALIASES["LIFETIME_OF_A_STATION"]: model_class.charg_cost_and_profitability.LIFETIME_OF_A_STATION()+1})
-    #     else:
-    #         model.step(1)
-    #     print("\nTime:", model_class.t)
-    #     print("-·-·-·-·-·-·-·-·-·-")
-    #     print("LIFETIME OF A STATION:",model_class.charg_cost_and_profitability.LIFETIME_OF_A_STATION()) #VAR
-    #     # print("total operational cost per station (accumulated over lifetime years)",model_class.charg_cost_and_profitability.total_operational_cost_per_station__accumulated_over_lifetime_years())
-    #     print("technology Maturity of Etruck [der]: ",model_class.utility_function.der_technology_Maturity_of_Etruck()) #STOCK
-    #     print("technology Maturity of Etruck [val]: ",model_class.utility_function.technology_Maturity_of_Etruck()) #STOCK
+    prev = LTM.snapshot(model, names)
+    for _ in range(n_steps):
+        model.step(1)
+        cur = LTM.snapshot(model, names)
+        #Initialize the class    
+        ls_class = LTM.LinkScore()
+        ls_class.model = model
+        ls_class.cur = cur
+        ls_class.prev = prev
+        #Get df of the link scores of the model
+        df = ls_class.link_score(model_class, stocks_flows, filtered_deps, z_with_links)
+
+        #Initialize the class    
+        ps_class = LTM.PathScore()
+        var_list, stock_list = ps_class.df_to_VariableSPA(df, stocks_flows)
+        ps_class.var_list = var_list  
+        ps_class.stock_list = stock_list
+
+        #Create the lists of VariableSPA variables that we are going to analyze
+        # #INPUTS
+        # inputs = list(set(levers_inputs_keys) | input_output_dict.keys())
+        # print(f"List of inputs for the path_score analysis: {inputs}\n")
+        # inputs_list = ps_class.list_to_VariableSPA(inputs)
+        # #OUTPUTS
+        # outputs = list(set().union(*input_output_dict.values()))
+        # print(f"List of outputs for the path_score analysis: {outputs}\n")
+        # outputs_list = ps_class.list_to_VariableSPA(outputs)
+        #LV_OUTPUTS
+        lv_outputs = levers_outputs_keys
+        lv_outputs_list = ps_class.list_to_VariableSPA(lv_outputs)
+
+        #Start the path search
+        # #STOCKS - STOCKS
+        # ps_class.path_search(stock_list, stock_list, model_class, model_class.set_path(os.path.join(output_path, "stock_stock")), False, True)
+        # # INPUTS - STOCKS
+        # ps_class.path_search(inputs_list, stock_list, model_class, model_class.set_path(os.path.join(output_path, "input_stock")), False, True)
+        # # INPUTS - OUTPUTS
+        # ps_class.path_search(inputs_list, outputs_list, model_class, model_class.set_path(os.path.join(output_path, "input_output")), False, True)
+        # # STOCKS - OUTPUTS
+        # ps_class.path_search(stock_list, outputs_list, model_class, model_class.set_path(os.path.join(output_path, "stock_output")), False, True)
+
+        #STOCKS - SENSITIVITY OUTPUTS
+        modified_output_path = os.path.join(output_path, "stock_lvOutput")
+        for i in range(len(lv_outputs_list)):
+            ps_class.backward_stock_search(model_class, [lv_outputs_list[i]], modified_output_path)
+            print(f"STOCKS RELATED TO OUTPUT {lv_outputs_list[i].name} AT TIME {model_class.t} are: \n{ps_class.stocks_related_to_output_total}\n")
+            #CLEAN THE VARIABLES
+            ps_class.stocks_related_to_output_total = set()
+            ps_class.stocks_related_to_output_prev = set()
+        #END THE LOOP
+        prev = cur
+        print(f"Step completed. Current time: {model_class.t}\n")
+
+        # print("Time:", model_class.t)
+        # print("-·-·-·-·-·-·-·-·-·-")
+        # print("LIFETIME OF A STATION:",model_class.charg_cost_and_profitability.LIFETIME_OF_A_STATION()) #VAR
+        # # print("total operational cost per station (accumulated over lifetime years)",model_class.charg_cost_and_profitability.total_operational_cost_per_station__accumulated_over_lifetime_years())
+        # print("technology Maturity of Etruck [der]: ",model_class.utility_function.der_technology_Maturity_of_Etruck()) #STOCK
+        # print("technology Maturity of Etruck [val]: ",model_class.utility_function.technology_Maturity_of_Etruck()) #STOCK
+
+        
+        # for n in range(40):
+        #     if n%10 == 5:
+        #         model.step(1, {model_class.charg_cost_and_profitability.ALIASES["LIFETIME_OF_A_STATION"]: model_class.charg_cost_and_profitability.LIFETIME_OF_A_STATION()+1})
+        #     else:
+        #         model.step(1)
+        #     print("\nTime:", model_class.t)
+        #     print("-·-·-·-·-·-·-·-·-·-")
+        #     print("LIFETIME OF A STATION:",model_class.charg_cost_and_profitability.LIFETIME_OF_A_STATION()) #VAR
+        #     # print("total operational cost per station (accumulated over lifetime years)",model_class.charg_cost_and_profitability.total_operational_cost_per_station__accumulated_over_lifetime_years())
+        #     print("technology Maturity of Etruck [der]: ",model_class.utility_function.der_technology_Maturity_of_Etruck()) #STOCK
+        #     print("technology Maturity of Etruck [val]: ",model_class.utility_function.technology_Maturity_of_Etruck()) #STOCK

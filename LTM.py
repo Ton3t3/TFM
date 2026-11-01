@@ -9,6 +9,7 @@
 import numpy as np
 import pandas as pd
 import os
+import re
 
 def snapshot(model, names):
     """**Takes a snapshot of the model's current state for all the variables of the model**"""
@@ -178,47 +179,30 @@ class LinkScore():
         df.to_csv(f"link_score_t-{model_class.t}-next2.csv", index=False)
         return df
 
-    def link_score(self, model, model_class, stocks_flows):
-        #Filtered dependencies dict
-        filtered_deps, z_with_links = filter_dependencies(model)
+    def link_score(self, model_class, stocks_flows, filtered_deps, z_with_links):     
+        # Aux/flow variables, not stocks or stateful vars
+        for z in z_with_links:             
+            self.z = z
+            for x in filtered_deps[z]:
+                self.x = x
+                # IN CASE THE CURRENT Z IS A STOCK
+                is_stateful_bool = (getattr(self.model.components, z).type == "Stateful")
+                self.variable_dict_storage(filtered_deps, is_stateful_bool, stocks_flows)
 
-        n_steps = 1
-        #List of variables in the model
-        names = list(filtered_deps.keys())
-        prev = snapshot(model, names)
-        for _ in range(n_steps):
-            model.step(1)
-            cur = snapshot(model, names)
-            #Initialize the class
-            self.model = model
-            self.cur = cur
-            self.prev = prev
-            # Aux/flow variables, not stocks or stateful vars
-            for z in z_with_links:             
-                self.z = z
-                for x in filtered_deps[z]:
-                    self.x = x
-                    # IN CASE THE CURRENT Z IS A STOCK
-                    is_stateful_bool = (getattr(model.components, z).type == "Stateful")
-                    self.variable_dict_storage(filtered_deps, is_stateful_bool, stocks_flows)
+        #Stock pipe related links [ ls(i->s) and ls(o->s)]
+        for s in stocks_flows.keys():
+            self.s = s
+            self.stocks_dict_storage(stocks_flows)
 
-            #Stock pipe related links [ ls(i->s) and ls(o->s)]
-            for s in stocks_flows.keys():
-                self.s = s
-                self.stocks_dict_storage(stocks_flows)
+        #DELAY and SMOOTH variables
+        # for v in set(stateful_vars) - set(stocks_flows.keys()):
+        #     """The link score of a pathway which passes through a macro is the composite
+        #     link score of the pathway with the strongest absolute magnitude of its pathway score
+        #     across all pathways through the macro."""
+        #     print(v)
 
-            #DELAY and SMOOTH variables
-            # for v in set(stateful_vars) - set(stocks_flows.keys()):
-            #     """The link score of a pathway which passes through a macro is the composite
-            #     link score of the pathway with the strongest absolute magnitude of its pathway score
-            #     across all pathways through the macro."""
-            #     print(v)
-
-            prev = cur
-            print(f"Step completed. Current time: {model_class.t}\n")
-
-            #Store the dict as a dataframe
-            df = self.dict_to_df(model_class)
+        #Store the dict as a dataframe
+        df = self.dict_to_df(model_class)
         return df
 
 
@@ -240,9 +224,13 @@ class PathScore:
         self.origin = None
         self.target = None
         self.paths = set() #Only stores unique paths 
+        self.stock_list = None
         self.var_list = None
         #For the path_score algorithm
         self.path = None
+        #For the backward path search algorithm
+        self.stocks_related_to_output_prev = set()
+        self.stocks_related_to_output_total = set()
 
     def add_path_if_unique(self, is_a_loop):
         names = [v.name for v in self.stack]
@@ -250,21 +238,27 @@ class PathScore:
         # so the same path found from different stocks counts once
         try:
             if is_a_loop:
-                i = names.index(min(names))
-                self.paths.add(tuple(names[i:] + names[:i]))
-                print(f"Path for target {self.target.name}: {tuple(names[i:] + names[:i])}\n")
+                # stack is [T, a, b, ..., T]; drop the closing duplicate
+                cycle = names[:-1]
+                i = cycle.index(min(cycle))
+                cycle = cycle[i:] + cycle[:i]
+                self.paths.add(tuple(cycle))
+                # print(f"Path for target {self.target.name}: {tuple(names[i:] + names[:i])}\n")
             else:
                 self.paths.add(tuple(names))
-                print(f"Path from {self.origin.name} to target {self.target.name}: {tuple(names)}\n")
+                # print(f"Path from {self.origin.name} to target {self.target.name}: {tuple(names)}\n")
         except (ValueError):
             self.paths.add(tuple())
-            print(f"Path for target {self.target.name}: {tuple()}\n")
+            # print(f"Path for targets {self.target.name}: {tuple()}\n")
             
 
 
     def check_outbound_uses(self, variable, score):
         if variable is self.target and self.stack:
+            ## Add the target variable to the path stack
+            self.stack.append(variable)
             self.add_path_if_unique(self.origin is self.target)
+            self.stack.pop()
             return
         # Never re-enter a variable already on the current path
         # (cycles that don't go through the target).
@@ -295,8 +289,6 @@ class PathScore:
                 if var_name == varSPA.name:
                     variableSPA_list.append(varSPA)
         return variableSPA_list
-
-
 
     def df_to_VariableSPA(self, df_links, stocks_flows):
         var_list = []
@@ -337,13 +329,15 @@ class PathScore:
     def strongest_path_algorithm(self, origin, target):
         self.origin = origin
         self.paths = set()
-        for i in range(len(target)):        
+        #Avoid the error if target is a single variable
+        target_norm = target if isinstance(target, list) else [target]
+        for i in range(len(target_norm)):        
             #reset state for every target
             for v in self.var_list: 
                 v.best_score = 0.0
                 v.visiting = False
             self.stack = []
-            self.target = target[i]
+            self.target = target_norm[i]
             self.check_outbound_uses(origin, 1.0)
         relative_path_score_dict, reduced_relative_path_score_dict = self.path_score()
         return relative_path_score_dict, reduced_relative_path_score_dict
@@ -372,17 +366,19 @@ class PathScore:
         return relative_path_score_dict
 
 
-    def dict_to_df(self, relative_path_score_dict, model_class, output_path, origin_name, extra_string = ""):
+    def dict_to_df(self, relative_path_score_dict, model_class, output_path, origin_name, csv_bool, extra_string = ""):
             rows = [
                 {
                     "path_score": path_values[0],
                     "relative_path_score": path_values[1],
-                    "path_set": path
+                    "path_set": path,
+                    "origin": origin_name
                 }
                 for path, path_values in relative_path_score_dict.items()
             ]
             df = pd.DataFrame(rows)
-            df.to_csv(os.path.join(output_path,f'path_score_t-{model_class.t}-{origin_name}'+extra_string+'.csv'))
+            if csv_bool:
+                df.to_csv(os.path.join(output_path,f'path_score_t-{model_class.t}-{origin_name}'+extra_string+'.csv'))
             return df
 
     def path_score(self):
@@ -390,8 +386,9 @@ class PathScore:
         reduced_path_score_list = []
         for path in self.paths:
             self.path = path
+            #Calculate the path score
             final_path_score_tuple = self.path_score_calc()
-            #Store the path_score result in a list
+            #Store the path score result in a list
             path_score_list.append(final_path_score_tuple)
             if final_path_score_tuple[1] != 0:
                 reduced_path_score_list.append(final_path_score_tuple)
@@ -400,11 +397,58 @@ class PathScore:
         reduced_relative_path_score_dict = self.relative_path_score_calc(reduced_path_score_list)
         return relative_path_score_dict, reduced_relative_path_score_dict
 
-    def path_search(self, inputs, outputs, model_class, output_path):
+    def path_search(self, inputs: VariableSPA, outputs: VariableSPA, model_class, output_path, full_df_bool, csv_bool):
+        df_list = []
         for input in inputs:
             relative_path_score_dict, reduced_relative_path_score_dict = self.strongest_path_algorithm(input, outputs)
             #To store all the paths
-            self.dict_to_df(relative_path_score_dict, model_class, output_path, input.name)
+            if full_df_bool:
+                df_full = self.dict_to_df(relative_path_score_dict, model_class, output_path, input.name, csv_bool, "_full")
             #To store only the active paths  
-            self.dict_to_df(reduced_relative_path_score_dict, model_class, output_path, input.name, "_reduced")
-          
+            df = self.dict_to_df(reduced_relative_path_score_dict, model_class, output_path, input.name, csv_bool)
+            df_list.append(df)
+
+        return df_list
+
+    def backward_get_stock_df(self, df_list):
+        stocks_related_to_output = set()
+        for df in df_list:
+            if df.shape != (0,0):
+                origin_name = df.loc[0, 'origin']
+                stocks_related_to_output.add(origin_name)
+        return stocks_related_to_output
+
+    def backward_get_stock(self, model_class, single_output_path):
+        stocks_related_to_output = set()
+        """*SEARCHES FROM ALL THE CSV FILES THE STOCKS THAT HAVE AN ACTUAL PATH FOR THE OUTPUT AND STORES THEM IN **stocks_related_to_output** VARIABLE*"""
+        pattern = re.compile(rf"path_score_t-{re.escape(str(model_class.t))}-(?P<var>.+)\.csv")
+        for file in os.listdir(single_output_path):
+            m = pattern.fullmatch(file)
+            if m is None or "full" in m.string:
+                continue
+            var = m["var"] 
+            csv_file = pd.read_csv(os.path.join(single_output_path, file))
+            if csv_file.shape != (0,1):
+                stocks_related_to_output.add(var) #Returns the stock as a string
+        return stocks_related_to_output        
+
+    def backward_stock_search(self, model_class, output_list, output_path):
+        for i in range(len(output_list)):
+            single_output_path = model_class.set_path(output_path + f"-{output_list[i].name}")
+            #Get the stocks related to each of the outputs
+            full_df_bool = False # If we want to print also the paths with 0 path score
+            csv_bool = False # If we want to create csv files from the path search dataframes
+            df_list = self.path_search(self.stock_list, output_list[i], model_class, single_output_path, full_df_bool, csv_bool)
+            if csv_bool:
+                stocks_related_to_output = self.backward_get_stock(model_class, single_output_path)
+            else:
+                stocks_related_to_output = self.backward_get_stock_df(df_list)
+            new_stocks = [s for s in stocks_related_to_output if s not in self.stocks_related_to_output_prev] 
+            
+            if len(new_stocks) == 0:
+                self.stocks_related_to_output_total = self.stocks_related_to_output_total | self.stocks_related_to_output_prev
+                continue
+            #rename the path for the next iteration
+            new_stocks_list = self.list_to_VariableSPA(new_stocks)
+            self.stocks_related_to_output_prev = stocks_related_to_output.copy()
+            self.backward_stock_search(model_class, new_stocks_list, single_output_path)
